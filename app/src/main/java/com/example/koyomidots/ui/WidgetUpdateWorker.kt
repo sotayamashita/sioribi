@@ -5,10 +5,8 @@ import android.util.Log
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
-import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import androidx.datastore.preferences.core.toMutablePreferences
 import com.example.koyomidots.di.AppGraph
 
 class WidgetUpdateWorker(
@@ -21,17 +19,11 @@ class WidgetUpdateWorker(
         val glanceIds = manager.getGlanceIds(YearProgressWidget::class.java)
 
         glanceIds.forEach { glanceId ->
-            updateAppWidgetState(
-                context = applicationContext,
-                definition = PreferencesGlanceStateDefinition,
-                glanceId = glanceId
-            ) { prefs ->
-                prefs.toMutablePreferences().also { mutablePrefs ->
-                    mutablePrefs[YearProgressWidget.KEY_CURRENT_DAY] = model.currentDay
-                    mutablePrefs[YearProgressWidget.KEY_TOTAL_DAYS] = model.totalDays
-                    mutablePrefs[YearProgressWidget.KEY_YEAR] = model.year
-                    mutablePrefs[YearProgressWidget.KEY_FORMATTED] = model.formattedString
-                }
+            updateAppWidgetState(applicationContext, glanceId) { prefs ->
+                prefs[YearProgressWidget.KEY_CURRENT_DAY] = model.currentDay
+                prefs[YearProgressWidget.KEY_TOTAL_DAYS] = model.totalDays
+                prefs[YearProgressWidget.KEY_YEAR] = model.year
+                prefs[YearProgressWidget.KEY_FORMATTED] = model.formattedString
             }
         }
 

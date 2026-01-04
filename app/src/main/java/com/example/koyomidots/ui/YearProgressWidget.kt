@@ -17,9 +17,6 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
-import androidx.glance.layout.Arrangement
-import androidx.glance.layout.Box
-import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
@@ -35,6 +32,8 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.glance.unit.dp
 import androidx.glance.unit.sp
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -81,12 +80,10 @@ class YearProgressWidget : GlanceAppWidget() {
                 LazyVerticalGrid(
                     gridCells = GridCells.Fixed(COLUMNS),
                     horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-                    modifier = GlanceModifier.wrapContentWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = GlanceModifier.wrapContentWidth()
                 ) {
-                    items(totalDays) { index ->
-                        val dayIndex = index + 1
+                    val days = (1..totalDays).toList()
+                    items(days) { dayIndex ->
                         val color = if (dayIndex <= currentDay) ACTIVE_COLOR else INACTIVE_COLOR
                         Box(
                             modifier = GlanceModifier
