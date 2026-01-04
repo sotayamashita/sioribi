@@ -30,13 +30,13 @@ import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.unit.dp
-import androidx.glance.unit.sp
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.koyomidots.R
 
 class YearProgressWidget : GlanceAppWidget() {
@@ -88,7 +88,8 @@ class YearProgressWidget : GlanceAppWidget() {
                         Box(
                             modifier = GlanceModifier
                                 .size(4.dp)
-                                .background(color)
+                                .background(color),
+                            content = {}
                         )
                     }
                 }
