@@ -1,40 +1,57 @@
 package com.example.koyomidots.ui
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.os.Build
+import android.util.Log
+import android.util.SizeF
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.clickable
-import androidx.glance.background
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.layout.wrapContentHeight
-import androidx.glance.layout.wrapContentWidth
 import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.toArgb
 import com.example.koyomidots.R
+import kotlin.math.roundToInt
 
 class YearProgressWidget : GlanceAppWidget() {
     companion object {
@@ -43,80 +60,114 @@ class YearProgressWidget : GlanceAppWidget() {
         val KEY_YEAR = intPreferencesKey("year")
         val KEY_FORMATTED = stringPreferencesKey("formatted")
 
-        private val ACTIVE_COLOR = ColorProvider(R.color.widget_dot_active)
-        private val INACTIVE_COLOR = ColorProvider(R.color.widget_dot_inactive)
-        private val TEXT_COLOR = ColorProvider(R.color.widget_text)
-        private const val COLUMNS = 14
+        private val ACTIVE_COLOR_RES = R.color.widget_dot_active
+        private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
+        private val TEXT_COLOR_RES = R.color.widget_text
+        private val GRID_PADDING = 0.dp
+        private val TEXT_PADDING = 8.dp
+        private val FOOTER_SPACING = 4.dp
+        private val FOOTER_HEIGHT = 20.dp
     }
 
     override val stateDefinition = PreferencesGlanceStateDefinition
+    override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val widgetSize = resolveWidgetSize(context, id)
         provideContent {
-            WidgetContent()
+            WidgetContent(widgetSize)
         }
     }
 
     @Composable
-    private fun WidgetContent() {
+    private fun WidgetContent(widgetSize: DpSize) {
         GlanceTheme {
+            val context = LocalContext.current
             val prefs = currentState<Preferences>()
             val currentDay = prefs[KEY_CURRENT_DAY] ?: 0
             val totalDays = prefs[KEY_TOTAL_DAYS] ?: 365
             val year = prefs[KEY_YEAR] ?: 0
             val formatted = prefs[KEY_FORMATTED] ?: "0/0"
+            val activeColor = Color(ContextCompat.getColor(context, ACTIVE_COLOR_RES))
+            val inactiveColor = Color(ContextCompat.getColor(context, INACTIVE_COLOR_RES))
+            val textColorProvider = ColorProvider(
+                Color(ContextCompat.getColor(context, TEXT_COLOR_RES))
+            )
+
+            val localSize = LocalSize.current
+            val effectiveSize = if (localSize.width.value > 0f && localSize.height.value > 0f) {
+                localSize
+            } else {
+                widgetSize
+            }
+            val gridSize = DpSize(
+                width = (effectiveSize.width - (GRID_PADDING * 2)).coerceAtLeast(0.dp),
+                height = (effectiveSize.height - (GRID_PADDING * 2) - FOOTER_HEIGHT - FOOTER_SPACING -
+                    (TEXT_PADDING * 2)).coerceAtLeast(0.dp)
+            )
+            val gridLayout = computeGridLayout(
+                totalDays = totalDays,
+                size = gridSize,
+                padding = 0.dp,
+                footerHeight = 0.dp,
+                footerSpacing = 0.dp
+            )
+            Log.d(
+                "YearProgressWidget",
+                "Widget size=${widgetSize.width.value}x${widgetSize.height.value} " +
+                    "local=${localSize.width.value}x${localSize.height.value} " +
+                    "effective=${effectiveSize.width.value}x${effectiveSize.height.value} " +
+                    "grid=${gridSize.width.value}x${gridSize.height.value} " +
+                    "grid=${gridLayout.columns}x${gridLayout.rows} " +
+                    "dot=${gridLayout.dotSize.value} " +
+                    "spacing=${gridLayout.horizontalSpacing.value}x${gridLayout.verticalSpacing.value}"
+            )
 
             Column(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(16.dp)
+                    .fillMaxHeight()
+                    .padding(GRID_PADDING)
                     .clickable(actionRunCallback<ManualRefreshAction>()),
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally
             ) {
-                val rows = (totalDays + COLUMNS - 1) / COLUMNS
-                Column(
-                    modifier = GlanceModifier.wrapContentWidth(),
-                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                val bitmap = remember(
+                    totalDays,
+                    currentDay,
+                    gridSize,
+                    gridLayout
                 ) {
-                    for (row in 0 until rows) {
-                        Row(
-                            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
-                        ) {
-                            for (col in 0 until COLUMNS) {
-                                val dayIndex = row * COLUMNS + col + 1
-                                if (dayIndex <= totalDays) {
-                                    val color = if (dayIndex <= currentDay) ACTIVE_COLOR else INACTIVE_COLOR
-                                    Box(
-                                        modifier = GlanceModifier
-                                            .size(4.dp)
-                                            .background(color),
-                                        content = {}
-                                    )
-                                } else {
-                                    Spacer(modifier = GlanceModifier.size(4.dp))
-                                }
-                                if (col < COLUMNS - 1) {
-                                    Spacer(modifier = GlanceModifier.width(8.dp))
-                                }
-                            }
-                        }
-                        if (row < rows - 1) {
-                            Spacer(modifier = GlanceModifier.height(8.dp))
-                        }
-                    }
+                    buildDotBitmap(
+                        context = context,
+                        gridSize = gridSize,
+                        layout = gridLayout,
+                        totalDays = totalDays,
+                        currentDay = currentDay,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor
+                    )
                 }
+                Image(
+                    provider = ImageProvider(bitmap = bitmap),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                        .defaultWeight(),
+                    contentScale = ContentScale.FillBounds
+                )
 
-                Spacer(modifier = GlanceModifier.height(12.dp))
+                Spacer(modifier = GlanceModifier.height(FOOTER_SPACING))
 
                 Row(
-                    modifier = GlanceModifier.fillMaxWidth(),
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                        .padding(TEXT_PADDING),
                     horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
                     Text(
                         text = if (year == 0) "----" else year.toString(),
                         style = TextStyle(
-                            color = TEXT_COLOR,
+                            color = textColorProvider,
                             fontSize = 14.sp,
                             fontFamily = FontFamily.Monospace
                         )
@@ -125,7 +176,7 @@ class YearProgressWidget : GlanceAppWidget() {
                     Text(
                         text = formatted,
                         style = TextStyle(
-                            color = TEXT_COLOR,
+                            color = textColorProvider,
                             fontSize = 14.sp,
                             fontFamily = FontFamily.Monospace
                         )
@@ -133,6 +184,67 @@ class YearProgressWidget : GlanceAppWidget() {
                 }
             }
         }
+    }
+
+    private fun buildDotBitmap(
+        context: Context,
+        gridSize: DpSize,
+        layout: GridLayout,
+        totalDays: Int,
+        currentDay: Int,
+        activeColor: Color,
+        inactiveColor: Color
+    ): Bitmap {
+        val density = context.resources.displayMetrics.density
+        val widthPx = (gridSize.width.value * density).roundToInt().coerceAtLeast(1)
+        val heightPx = (gridSize.height.value * density).roundToInt().coerceAtLeast(1)
+        val bitmap = createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val activePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = activeColor.toArgb()
+            style = Paint.Style.FILL
+        }
+        val inactivePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = inactiveColor.toArgb()
+            style = Paint.Style.FILL
+        }
+
+        val dotSizePx = layout.dotSize.value * density
+        val hSpacingPx = layout.horizontalSpacing.value * density
+        val vSpacingPx = layout.verticalSpacing.value * density
+        if (dotSizePx <= 0f) {
+            return bitmap
+        }
+
+        for (index in 1..totalDays) {
+            val row = (index - 1) / layout.columns
+            val col = (index - 1) % layout.columns
+            val x = col * (dotSizePx + hSpacingPx)
+            val y = row * (dotSizePx + vSpacingPx)
+            val paint = if (index <= currentDay) activePaint else inactivePaint
+            canvas.drawRect(x, y, x + dotSizePx, y + dotSizePx, paint)
+        }
+
+        return bitmap
+    }
+
+    private fun resolveWidgetSize(
+        context: Context,
+        glanceId: GlanceId
+    ): DpSize {
+        val manager = GlanceAppWidgetManager(context)
+        val appWidgetId = manager.getAppWidgetId(glanceId)
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        val fallbackSize = DpSize(minWidth.dp, minHeight.dp)
+        val resolvedSize = fallbackSize
+        Log.d(
+            "YearProgressWidget",
+            "Widget options min=${minWidth}x${minHeight} resolved=${resolvedSize.width.value}x${resolvedSize.height.value}"
+        )
+        return resolvedSize
     }
 }
 
