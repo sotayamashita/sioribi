@@ -1,12 +1,15 @@
 package com.example.koyomidots.ui
 
+import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.PreferencesGlanceStateDefinition
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
@@ -35,7 +38,7 @@ import androidx.glance.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.compose.ui.graphics.Color
+import com.example.koyomidots.R
 
 class YearProgressWidget : GlanceAppWidget() {
     companion object {
@@ -44,25 +47,22 @@ class YearProgressWidget : GlanceAppWidget() {
         val KEY_YEAR = intPreferencesKey("year")
         val KEY_FORMATTED = stringPreferencesKey("formatted")
 
-        private val ACTIVE_COLOR = ColorProvider(
-            light = Color(0xFF2E2A24),
-            dark = Color(0xFFF1E7D8)
-        )
-        private val INACTIVE_COLOR = ColorProvider(
-            light = Color(0xFFD8CBB8),
-            dark = Color(0xFF3B332B)
-        )
-        private val TEXT_COLOR = ColorProvider(
-            light = Color(0xFF2E2A24),
-            dark = Color(0xFFF1E7D8)
-        )
+        private val ACTIVE_COLOR = ColorProvider(R.color.widget_dot_active)
+        private val INACTIVE_COLOR = ColorProvider(R.color.widget_dot_inactive)
+        private val TEXT_COLOR = ColorProvider(R.color.widget_text)
         private const val COLUMNS = 14
     }
 
     override val stateDefinition = PreferencesGlanceStateDefinition
 
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        provideContent {
+            WidgetContent()
+        }
+    }
+
     @Composable
-    override fun Content() {
+    private fun WidgetContent() {
         GlanceTheme {
             val prefs = currentState<Preferences>()
             val currentDay = prefs[KEY_CURRENT_DAY] ?: 0

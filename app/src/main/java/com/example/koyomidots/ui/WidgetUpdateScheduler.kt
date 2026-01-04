@@ -2,8 +2,8 @@ package com.example.koyomidots.ui
 
 import android.content.Context
 import androidx.glance.GlanceId
-import androidx.glance.action.ActionCallback
 import androidx.glance.action.ActionParameters
+import androidx.glance.appwidget.action.ActionCallback
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
