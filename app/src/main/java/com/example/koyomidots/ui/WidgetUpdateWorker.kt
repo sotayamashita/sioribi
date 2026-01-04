@@ -8,6 +8,7 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.datastore.preferences.core.toMutablePreferences
 import com.example.koyomidots.di.AppGraph
 
 class WidgetUpdateWorker(
@@ -25,10 +26,12 @@ class WidgetUpdateWorker(
                 definition = PreferencesGlanceStateDefinition,
                 glanceId = glanceId
             ) { prefs ->
-                prefs[YearProgressWidget.KEY_CURRENT_DAY] = model.currentDay
-                prefs[YearProgressWidget.KEY_TOTAL_DAYS] = model.totalDays
-                prefs[YearProgressWidget.KEY_YEAR] = model.year
-                prefs[YearProgressWidget.KEY_FORMATTED] = model.formattedString
+                prefs.toMutablePreferences().apply {
+                    this[YearProgressWidget.KEY_CURRENT_DAY] = model.currentDay
+                    this[YearProgressWidget.KEY_TOTAL_DAYS] = model.totalDays
+                    this[YearProgressWidget.KEY_YEAR] = model.year
+                    this[YearProgressWidget.KEY_FORMATTED] = model.formattedString
+                }
             }
         }
 
