@@ -3,9 +3,9 @@ package com.example.koyomidots.ui
 import android.content.Context
 import android.util.Log
 import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.state.PreferencesGlanceStateDefinition
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.datastore.preferences.core.toMutablePreferences
@@ -26,11 +26,11 @@ class WidgetUpdateWorker(
                 definition = PreferencesGlanceStateDefinition,
                 glanceId = glanceId
             ) { prefs ->
-                prefs.toMutablePreferences().apply {
-                    this[YearProgressWidget.KEY_CURRENT_DAY] = model.currentDay
-                    this[YearProgressWidget.KEY_TOTAL_DAYS] = model.totalDays
-                    this[YearProgressWidget.KEY_YEAR] = model.year
-                    this[YearProgressWidget.KEY_FORMATTED] = model.formattedString
+                prefs.toMutablePreferences().also { mutablePrefs ->
+                    mutablePrefs[YearProgressWidget.KEY_CURRENT_DAY] = model.currentDay
+                    mutablePrefs[YearProgressWidget.KEY_TOTAL_DAYS] = model.totalDays
+                    mutablePrefs[YearProgressWidget.KEY_YEAR] = model.year
+                    mutablePrefs[YearProgressWidget.KEY_FORMATTED] = model.formattedString
                 }
             }
         }
