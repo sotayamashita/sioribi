@@ -11,9 +11,6 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.lazy.GridCells
-import androidx.glance.appwidget.lazy.LazyVerticalGrid
-import androidx.glance.appwidget.lazy.items
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
@@ -77,20 +74,36 @@ class YearProgressWidget : GlanceAppWidget() {
                     .clickable(actionRunCallback<ManualRefreshAction>()),
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally
             ) {
-                LazyVerticalGrid(
-                    gridCells = GridCells.Fixed(COLUMNS),
-                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-                    modifier = GlanceModifier.wrapContentWidth()
+                val rows = (totalDays + COLUMNS - 1) / COLUMNS
+                Column(
+                    modifier = GlanceModifier.wrapContentWidth(),
+                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
-                    val days = (1..totalDays).toList()
-                    items(days) { dayIndex ->
-                        val color = if (dayIndex <= currentDay) ACTIVE_COLOR else INACTIVE_COLOR
-                        Box(
-                            modifier = GlanceModifier
-                                .size(4.dp)
-                                .background(color),
-                            content = {}
-                        )
+                    for (row in 0 until rows) {
+                        Row(
+                            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                        ) {
+                            for (col in 0 until COLUMNS) {
+                                val dayIndex = row * COLUMNS + col + 1
+                                if (dayIndex <= totalDays) {
+                                    val color = if (dayIndex <= currentDay) ACTIVE_COLOR else INACTIVE_COLOR
+                                    Box(
+                                        modifier = GlanceModifier
+                                            .size(4.dp)
+                                            .background(color),
+                                        content = {}
+                                    )
+                                } else {
+                                    Spacer(modifier = GlanceModifier.size(4.dp))
+                                }
+                                if (col < COLUMNS - 1) {
+                                    Spacer(modifier = GlanceModifier.width(8.dp))
+                                }
+                            }
+                        }
+                        if (row < rows - 1) {
+                            Spacer(modifier = GlanceModifier.height(8.dp))
+                        }
                     }
                 }
 
