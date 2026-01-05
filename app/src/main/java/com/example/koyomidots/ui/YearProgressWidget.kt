@@ -21,6 +21,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
+import androidx.glance.background
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionRunCallback
@@ -40,6 +41,7 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.glance.layout.Column
@@ -63,10 +65,11 @@ class YearProgressWidget : GlanceAppWidget() {
         private val ACTIVE_COLOR_RES = R.color.widget_dot_active
         private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
         private val TEXT_COLOR_RES = R.color.widget_text
-        private val GRID_PADDING = 0.dp
-        private val TEXT_PADDING = 8.dp
-        private val FOOTER_SPACING = 4.dp
+        private val FOOTER_SPACING = 12.dp
         private val FOOTER_HEIGHT = 20.dp
+        private const val MIN_GRID_COLUMNS = 7
+        private const val DOT_SPACING_RATIO = 0.55f
+        private const val PADDING_RATIO = 1.8f
     }
 
     override val stateDefinition = PreferencesGlanceStateDefinition
@@ -93,6 +96,9 @@ class YearProgressWidget : GlanceAppWidget() {
             val textColorProvider = ColorProvider(
                 Color(ContextCompat.getColor(context, TEXT_COLOR_RES))
             )
+            val backgroundColorProvider = ColorProvider(
+                Color(ContextCompat.getColor(context, R.color.widget_background))
+            )
 
             val localSize = LocalSize.current
             val effectiveSize = if (localSize.width.value > 0f && localSize.height.value > 0f) {
@@ -100,17 +106,18 @@ class YearProgressWidget : GlanceAppWidget() {
             } else {
                 widgetSize
             }
-            val gridSize = DpSize(
-                width = (effectiveSize.width - (GRID_PADDING * 2)).coerceAtLeast(0.dp),
-                height = (effectiveSize.height - (GRID_PADDING * 2) - FOOTER_HEIGHT - FOOTER_SPACING -
-                    (TEXT_PADDING * 2)).coerceAtLeast(0.dp)
-            )
             val gridLayout = computeGridLayout(
                 totalDays = totalDays,
-                size = gridSize,
-                padding = 0.dp,
-                footerHeight = 0.dp,
-                footerSpacing = 0.dp
+                size = effectiveSize,
+                footerHeight = FOOTER_HEIGHT,
+                footerSpacing = FOOTER_SPACING,
+                minColumns = MIN_GRID_COLUMNS,
+                spacingRatio = DOT_SPACING_RATIO,
+                paddingRatio = PADDING_RATIO
+            )
+            val gridSize = DpSize(
+                width = effectiveSize.width.coerceAtLeast(0.dp),
+                height = (effectiveSize.height - FOOTER_HEIGHT - FOOTER_SPACING).coerceAtLeast(0.dp)
             )
             Log.d(
                 "YearProgressWidget",
@@ -120,14 +127,15 @@ class YearProgressWidget : GlanceAppWidget() {
                     "grid=${gridSize.width.value}x${gridSize.height.value} " +
                     "grid=${gridLayout.columns}x${gridLayout.rows} " +
                     "dot=${gridLayout.dotSize.value} " +
-                    "spacing=${gridLayout.horizontalSpacing.value}x${gridLayout.verticalSpacing.value}"
+                    "spacing=${gridLayout.horizontalSpacing.value}x${gridLayout.verticalSpacing.value} " +
+                    "padding=${gridLayout.padding.value}"
             )
 
             Column(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .fillMaxHeight()
-                    .padding(GRID_PADDING)
+                    .background(backgroundColorProvider)
                     .clickable(actionRunCallback<ManualRefreshAction>()),
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally
             ) {
@@ -152,7 +160,7 @@ class YearProgressWidget : GlanceAppWidget() {
                     contentDescription = null,
                     modifier = GlanceModifier
                         .fillMaxWidth()
-                        .defaultWeight(),
+                        .height(gridSize.height),
                     contentScale = ContentScale.FillBounds
                 )
 
@@ -161,8 +169,8 @@ class YearProgressWidget : GlanceAppWidget() {
                 Row(
                     modifier = GlanceModifier
                         .fillMaxWidth()
-                        .padding(TEXT_PADDING),
-                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                        .padding(horizontal = gridLayout.padding),
+                    horizontalAlignment = Alignment.Horizontal.Start
                 ) {
                     Text(
                         text = if (year == 0) "----" else year.toString(),
@@ -172,13 +180,14 @@ class YearProgressWidget : GlanceAppWidget() {
                             fontFamily = FontFamily.Monospace
                         )
                     )
-                    Spacer(modifier = GlanceModifier.width(8.dp))
                     Text(
                         text = formatted,
+                        modifier = GlanceModifier.fillMaxWidth(),
                         style = TextStyle(
                             color = textColorProvider,
                             fontSize = 14.sp,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = FontFamily.Monospace,
+                            textAlign = TextAlign.End
                         )
                     )
                 }
@@ -212,6 +221,7 @@ class YearProgressWidget : GlanceAppWidget() {
         val dotSizePx = layout.dotSize.value * density
         val hSpacingPx = layout.horizontalSpacing.value * density
         val vSpacingPx = layout.verticalSpacing.value * density
+        val padPx = layout.padding.value * density
         if (dotSizePx <= 0f) {
             return bitmap
         }
@@ -219,10 +229,11 @@ class YearProgressWidget : GlanceAppWidget() {
         for (index in 1..totalDays) {
             val row = (index - 1) / layout.columns
             val col = (index - 1) % layout.columns
-            val x = col * (dotSizePx + hSpacingPx)
-            val y = row * (dotSizePx + vSpacingPx)
+            val x = padPx + col * (dotSizePx + hSpacingPx)
+            val y = padPx + row * (dotSizePx + vSpacingPx)
+            val radius = dotSizePx / 2f
             val paint = if (index <= currentDay) activePaint else inactivePaint
-            canvas.drawRect(x, y, x + dotSizePx, y + dotSizePx, paint)
+            canvas.drawCircle(x + radius, y + radius, radius, paint)
         }
 
         return bitmap

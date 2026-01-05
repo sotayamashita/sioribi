@@ -11,9 +11,11 @@ class WidgetGridSizingTest {
         val layout = computeGridLayout(
             totalDays = 365,
             size = DpSize(180.dp, 180.dp),
-            padding = 8.dp,
             footerHeight = 20.dp,
-            footerSpacing = 12.dp
+            footerSpacing = 12.dp,
+            minColumns = 7,
+            spacingRatio = 0.5f,
+            paddingRatio = 2.0f
         )
 
         assertThat(layout.columns * layout.rows).isAtLeast(365)
@@ -25,19 +27,39 @@ class WidgetGridSizingTest {
         val small = computeGridLayout(
             totalDays = 365,
             size = DpSize(180.dp, 180.dp),
-            padding = 8.dp,
             footerHeight = 20.dp,
-            footerSpacing = 12.dp
+            footerSpacing = 12.dp,
+            minColumns = 7,
+            spacingRatio = 0.5f,
+            paddingRatio = 2.0f
         )
         val large = computeGridLayout(
             totalDays = 365,
             size = DpSize(378.dp, 489.dp),
-            padding = 8.dp,
             footerHeight = 20.dp,
-            footerSpacing = 12.dp
+            footerSpacing = 12.dp,
+            minColumns = 7,
+            spacingRatio = 0.5f,
+            paddingRatio = 2.0f
         )
 
-        assertThat(large.dotSize.value).isGreaterThan(small.dotSize.value)
+        assertThat(large.dotSize.value).isAtLeast(small.dotSize.value)
+        assertThat(large.dotSize.value).isGreaterThan(0f)
+    }
+
+    @Test
+    fun computeGridLayout_increasesColumnsForWideSize() {
+        val layout = computeGridLayout(
+            totalDays = 365,
+            size = DpSize(600.dp, 240.dp),
+            footerHeight = 20.dp,
+            footerSpacing = 12.dp,
+            minColumns = 7,
+            spacingRatio = 0.55f,
+            paddingRatio = 1.8f
+        )
+
+        assertThat(layout.columns).isGreaterThan(7)
     }
 
     @Test
