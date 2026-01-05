@@ -116,8 +116,9 @@ class YearProgressWidget : GlanceAppWidget() {
                 paddingRatio = PADDING_RATIO
             )
             val gridSize = DpSize(
-                width = effectiveSize.width.coerceAtLeast(0.dp),
-                height = (effectiveSize.height - FOOTER_HEIGHT - FOOTER_SPACING).coerceAtLeast(0.dp)
+                width = (effectiveSize.width - (gridLayout.padding * 2)).coerceAtLeast(0.dp),
+                height = (effectiveSize.height - (gridLayout.padding * 2) - FOOTER_HEIGHT - FOOTER_SPACING)
+                    .coerceAtLeast(0.dp)
             )
             Log.d(
                 "YearProgressWidget",
@@ -135,6 +136,7 @@ class YearProgressWidget : GlanceAppWidget() {
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .fillMaxHeight()
+                    .padding(gridLayout.padding)
                     .background(backgroundColorProvider)
                     .clickable(actionRunCallback<ManualRefreshAction>()),
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally
@@ -168,8 +170,7 @@ class YearProgressWidget : GlanceAppWidget() {
 
                 Row(
                     modifier = GlanceModifier
-                        .fillMaxWidth()
-                        .padding(horizontal = gridLayout.padding),
+                        .fillMaxWidth(),
                     horizontalAlignment = Alignment.Horizontal.Start
                 ) {
                     Text(
@@ -221,7 +222,7 @@ class YearProgressWidget : GlanceAppWidget() {
         val dotSizePx = layout.dotSize.value * density
         val hSpacingPx = layout.horizontalSpacing.value * density
         val vSpacingPx = layout.verticalSpacing.value * density
-        val padPx = layout.padding.value * density
+        val padPx = 0f
         if (dotSizePx <= 0f) {
             return bitmap
         }
