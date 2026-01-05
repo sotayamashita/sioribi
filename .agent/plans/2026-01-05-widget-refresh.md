@@ -24,6 +24,7 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 - [x] (2026-01-05 13:45JST) Investigated local Java toolchain selection; confirmed `java` resolves to OpenJDK 25.0.1 despite mise config specifying Corretto 21.
 - [x] (2026-01-05 14:01JST) Ran `mise trust` and attempted activation; `java -version` still reported 25.0.1 (activation command executed in background).
 - [x] (2026-01-05 14:03JST) Verified `eval "$(mise activate bash)"` switches to Corretto 21, then re-ran tests and hit a compile error in `WidgetRefreshReceiverTest`.
+- [x] (2026-01-05 14:12JST) Reworked `WidgetRefreshReceiverTest` to mock `Intent` and `Context`, then re-ran unit tests successfully under Corretto 21.
 - [ ] Validate on device that values appear immediately after widget add and on time change events.
 
 ## Surprises & Discoveries
@@ -42,6 +43,9 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 
 - Observation: With Corretto 21 active, unit tests progressed but failed compilation because `android.test.mock.MockContext` is unresolved in JVM unit tests.
   Evidence: `WidgetRefreshReceiverTest.kt:4:16 Unresolved reference: test` and `WidgetRefreshReceiverTest.kt:14:27 Unresolved reference: MockContext`.
+
+- Observation: JVM unit tests cannot rely on Android framework `Intent` implementations; mocking avoids "not mocked" runtime exceptions.
+  Evidence: After replacing real `Intent` construction with MockK stubs, `./gradlew testDebugUnitTest` succeeded.
 
 ## Decision Log
 
@@ -194,6 +198,10 @@ Executed commands and outputs during implementation:
     FAILURE: Build failed with an exception.
     Execution failed for task ':app:compileDebugUnitTestKotlin'.
 
+    (repo root) eval "$(mise activate bash)" && ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+    25 actionable tasks: 3 executed, 22 up-to-date
+
 ## Validation and Acceptance
 
 Validation is successful when all of the following are observed:
@@ -207,7 +215,7 @@ Validation is successful when all of the following are observed:
 
 Validation status:
 
-Manual device validation has not been run yet. Unit tests failed to start because Gradle aborted with the `25.0.1` error shown above; resolve that error (likely by using a JDK version supported by the Gradle/Kotlin toolchain) and re-run `./gradlew testDebugUnitTest`. For manual checks, add the widget and change the system time/date/timezone to confirm an immediate refresh; also reboot and verify the Boot trigger logs the refresh reason.
+Manual device validation has not been run yet. Unit tests now pass with Corretto 21 active. For manual checks, add the widget and change the system time/date/timezone to confirm an immediate refresh; also reboot and verify the Boot trigger logs the refresh reason.
 
 ## Idempotence and Recovery
 
@@ -284,3 +292,4 @@ Change note: Clarified AppGraph as an Application-owned container instance and n
 Change note: Logged implementation steps, decisions, and validation status after adding the coordinator, receivers, and tests (2026-01-05, Codex).
 Change note: Recorded the Gradle test failure and added follow-up to resolve it before validation (2026-01-05, Codex).
 Change note: Captured the stacktrace evidence for the JDK `25.0.1` parsing failure and re-run result (2026-01-05, Codex).
+Change note: Logged the unit test fix (mocked Intents) and the successful JVM unit test run (2026-01-05, Codex).

@@ -1,7 +1,9 @@
 package com.example.koyomidots.ui
 
+import android.content.Context
 import android.content.Intent
-import android.test.mock.MockContext
+import io.mockk.every
+import io.mockk.mockk
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
@@ -11,7 +13,7 @@ class WidgetRefreshReceiverTest {
     private val originalProvider = WidgetRefreshCoordinatorProvider.provider
     private val enqueuer = FakeEnqueuer()
     private val coordinator = WidgetRefreshCoordinator(enqueuer)
-    private val context = MockContext()
+    private val context: Context = mockk(relaxed = true)
 
     @Before
     fun setUp() {
@@ -28,9 +30,9 @@ class WidgetRefreshReceiverTest {
     fun timeChangeActionsTriggerTimeChangedReason() {
         val receiver = WidgetRefreshReceiver()
 
-        receiver.onReceive(context, Intent(Intent.ACTION_DATE_CHANGED))
-        receiver.onReceive(context, Intent(Intent.ACTION_TIME_CHANGED))
-        receiver.onReceive(context, Intent(Intent.ACTION_TIMEZONE_CHANGED))
+        receiver.onReceive(context, intentWithAction(Intent.ACTION_DATE_CHANGED))
+        receiver.onReceive(context, intentWithAction(Intent.ACTION_TIME_CHANGED))
+        receiver.onReceive(context, intentWithAction(Intent.ACTION_TIMEZONE_CHANGED))
 
         assertThat(enqueuer.reasons).containsExactly(
             RefreshReason.TimeChanged,
@@ -43,7 +45,7 @@ class WidgetRefreshReceiverTest {
     fun bootCompletedTriggersBootReason() {
         val receiver = WidgetRefreshReceiver()
 
-        receiver.onReceive(context, Intent(Intent.ACTION_BOOT_COMPLETED))
+        receiver.onReceive(context, intentWithAction(Intent.ACTION_BOOT_COMPLETED))
 
         assertThat(enqueuer.reasons).containsExactly(RefreshReason.Boot)
     }
@@ -52,7 +54,7 @@ class WidgetRefreshReceiverTest {
     fun packageReplacedTriggersPackageReplacedReason() {
         val receiver = WidgetRefreshReceiver()
 
-        receiver.onReceive(context, Intent(Intent.ACTION_MY_PACKAGE_REPLACED))
+        receiver.onReceive(context, intentWithAction(Intent.ACTION_MY_PACKAGE_REPLACED))
 
         assertThat(enqueuer.reasons).containsExactly(RefreshReason.PackageReplaced)
     }
@@ -61,7 +63,7 @@ class WidgetRefreshReceiverTest {
     fun unknownActionDoesNotEnqueue() {
         val receiver = WidgetRefreshReceiver()
 
-        receiver.onReceive(context, Intent("com.example.UNKNOWN"))
+        receiver.onReceive(context, intentWithAction("com.example.UNKNOWN"))
 
         assertThat(enqueuer.reasons).isEmpty()
     }
@@ -72,5 +74,11 @@ class WidgetRefreshReceiverTest {
         override fun enqueueImmediate(reason: RefreshReason) {
             reasons.add(reason)
         }
+    }
+
+    private fun intentWithAction(action: String): Intent {
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.action } returns action
+        return intent
     }
 }
