@@ -23,6 +23,7 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 - [x] (2026-01-05 13:42JST) Investigated the Gradle test failure with --stacktrace; confirmed JavaVersion parsing error for `25.0.1` and re-ran tests (still failing).
 - [x] (2026-01-05 13:45JST) Investigated local Java toolchain selection; confirmed `java` resolves to OpenJDK 25.0.1 despite mise config specifying Corretto 21.
 - [x] (2026-01-05 14:01JST) Ran `mise trust` and attempted activation; `java -version` still reported 25.0.1 (activation command executed in background).
+- [x] (2026-01-05 14:03JST) Verified `eval "$(mise activate bash)"` switches to Corretto 21, then re-ran tests and hit a compile error in `WidgetRefreshReceiverTest`.
 - [ ] Validate on device that values appear immediately after widget add and on time change events.
 
 ## Surprises & Discoveries
@@ -38,6 +39,9 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 
 - Observation: `eval "$(mise activate bash)" & java -version` still reported 25.0.1 because the activation ran in the background, so it did not affect the subsequent `java -version` in the current shell.
   Evidence: `java -version -> openjdk version "25.0.1"` after the backgrounded activation command.
+
+- Observation: With Corretto 21 active, unit tests progressed but failed compilation because `android.test.mock.MockContext` is unresolved in JVM unit tests.
+  Evidence: `WidgetRefreshReceiverTest.kt:4:16 Unresolved reference: test` and `WidgetRefreshReceiverTest.kt:14:27 Unresolved reference: MockContext`.
 
 ## Decision Log
 
@@ -177,6 +181,18 @@ Executed commands and outputs during implementation:
 
     (repo root) eval "$(mise activate bash)" & java -version
     openjdk version "25.0.1" 2025-10-21
+
+    (repo root) eval "$(mise activate bash)" && java -version
+    openjdk version "21.0.9" 2025-10-21 LTS
+    OpenJDK Runtime Environment Corretto-21.0.9.10.1 (build 21.0.9+10-LTS)
+    OpenJDK 64-Bit Server VM Corretto-21.0.9.10.1 (build 21.0.9+10-LTS, mixed mode, sharing)
+
+    (repo root) eval "$(mise activate bash)" && ./gradlew testDebugUnitTest
+    > Task :app:compileDebugUnitTestKotlin FAILED
+    e: .../WidgetRefreshReceiverTest.kt:4:16 Unresolved reference: test
+    e: .../WidgetRefreshReceiverTest.kt:14:27 Unresolved reference: MockContext
+    FAILURE: Build failed with an exception.
+    Execution failed for task ':app:compileDebugUnitTestKotlin'.
 
 ## Validation and Acceptance
 
