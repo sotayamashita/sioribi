@@ -50,7 +50,6 @@ android {
 detekt {
     buildUponDefaultConfig = true
     config.setFrom(files("$rootDir/detekt.yml"))
-    baseline = file("$rootDir/detekt-baseline.xml")
 }
 
 dependencies {
