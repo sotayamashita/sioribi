@@ -1,4 +1,4 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 import android.content.Context
 import android.util.Log
@@ -7,14 +7,14 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.koyomidots.KoyomiDotsApplication
+import com.example.sioribi.SioribiApplication
 
 class WidgetUpdateWorker(
     appContext: Context,
     params: WorkerParameters
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
-        val appGraph = (applicationContext as KoyomiDotsApplication).appGraph
+        val appGraph = (applicationContext as SioribiApplication).appGraph
         val model = appGraph.getYearProgressUseCase.execute()
         val manager = GlanceAppWidgetManager(applicationContext)
         val glanceIds = manager.getGlanceIds(YearProgressWidget::class.java)

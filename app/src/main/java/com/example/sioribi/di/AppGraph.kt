@@ -1,11 +1,11 @@
-package com.example.koyomidots.di
+package com.example.sioribi.di
 
 import android.content.Context
-import com.example.koyomidots.data.SystemTimeDataSource
-import com.example.koyomidots.data.TimeDataSource
-import com.example.koyomidots.domain.GetYearProgressUseCase
-import com.example.koyomidots.ui.WidgetRefreshCoordinator
-import com.example.koyomidots.ui.WorkManagerWidgetRefreshEnqueuer
+import com.example.sioribi.data.SystemTimeDataSource
+import com.example.sioribi.data.TimeDataSource
+import com.example.sioribi.domain.GetYearProgressUseCase
+import com.example.sioribi.ui.WidgetRefreshCoordinator
+import com.example.sioribi.ui.WorkManagerWidgetRefreshEnqueuer
 
 class AppGraph(appContext: Context) {
     val timeDataSource: TimeDataSource = SystemTimeDataSource()

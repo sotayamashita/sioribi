@@ -1,4 +1,4 @@
-package com.example.koyomidots.data
+package com.example.sioribi.data
 
 import java.time.LocalDate
 

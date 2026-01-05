@@ -1,10 +1,10 @@
-package com.example.koyomidots
+package com.example.sioribi
 
 import android.app.Application
-import com.example.koyomidots.di.AppGraph
-import com.example.koyomidots.ui.WidgetUpdateScheduler
+import com.example.sioribi.di.AppGraph
+import com.example.sioribi.ui.WidgetUpdateScheduler
 
-class KoyomiDotsApplication : Application() {
+class SioribiApplication : Application() {
     val appGraph: AppGraph by lazy { AppGraph(this) }
 
     override fun onCreate() {

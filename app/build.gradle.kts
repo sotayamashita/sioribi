@@ -4,14 +4,14 @@ plugins {
 }
 
 android {
-    namespace = "com.example.koyomidots"
+    namespace = "com.example.sioribi"
     compileSdk {
         version = release(36)
     }
     buildToolsVersion = "36.1.0"
 
     defaultConfig {
-        applicationId = "com.example.koyomidots"
+        applicationId = "com.example.sioribi"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

@@ -1,11 +1,11 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 import android.content.Context
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.example.koyomidots.KoyomiDotsApplication
+import com.example.sioribi.SioribiApplication
 
 internal const val KEY_REFRESH_REASON = "refresh_reason"
 private const val UNIQUE_IMMEDIATE_WORK = "year_progress_refresh"
@@ -38,7 +38,7 @@ class WidgetRefreshCoordinator(
 
 internal object WidgetRefreshCoordinatorProvider {
     var provider: (Context) -> WidgetRefreshCoordinator = {
-        (it.applicationContext as KoyomiDotsApplication).appGraph.widgetRefreshCoordinator
+        (it.applicationContext as SioribiApplication).appGraph.widgetRefreshCoordinator
     }
 
     fun from(context: Context): WidgetRefreshCoordinator = provider(context)

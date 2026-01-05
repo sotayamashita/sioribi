@@ -1,4 +1,4 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 import android.content.Context
 import android.content.Intent

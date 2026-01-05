@@ -1,4 +1,4 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp

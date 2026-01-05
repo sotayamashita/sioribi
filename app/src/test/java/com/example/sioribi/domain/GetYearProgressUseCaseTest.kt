@@ -1,6 +1,6 @@
-package com.example.koyomidots.domain
+package com.example.sioribi.domain
 
-import com.example.koyomidots.data.TimeDataSource
+import com.example.sioribi.data.TimeDataSource
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.time.LocalDate

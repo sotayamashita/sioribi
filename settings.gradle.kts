@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "koyomidots"
+rootProject.name = "sioribi"
 include(":app")
  

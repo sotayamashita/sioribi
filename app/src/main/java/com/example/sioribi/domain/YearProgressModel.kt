@@ -1,4 +1,4 @@
-package com.example.koyomidots.domain
+package com.example.sioribi.domain
 
 data class YearProgressModel(
     val currentDay: Int,

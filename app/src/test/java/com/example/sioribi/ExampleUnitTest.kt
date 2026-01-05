@@ -1,4 +1,4 @@
-package com.example.koyomidots
+package com.example.sioribi
 
 import org.junit.Test
 

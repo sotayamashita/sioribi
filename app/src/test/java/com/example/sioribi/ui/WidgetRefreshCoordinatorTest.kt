@@ -1,4 +1,4 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

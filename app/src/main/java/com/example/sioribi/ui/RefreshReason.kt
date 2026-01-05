@@ -1,4 +1,4 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 enum class RefreshReason {
     Added,

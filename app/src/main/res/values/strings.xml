@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">koyomidots</string>
+    <string name="app_name">しおり日</string>
+    <string name="tagline">日常に、そっと栞を</string>
     <string name="widget_year_progress">Year Progress</string>
     <string name="widget_year_progress_description">Shows how far through the current year you are using a dot grid.</string>
 </resources>

@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 
 - Single Android app module: `app/`.
-- Main Kotlin sources: `app/src/main/java/com/example/koyomidots/` (packages include `data/`, `domain/`, `di/`, `ui/`).
+- Main Kotlin sources: `app/src/main/java/com/example/sioribi/` (packages include `data/`, `domain/`, `di/`, `ui/`).
 - Unit tests: `app/src/test/java/`.
 - Instrumented tests: `app/src/androidTest/java/`.
 - Resources: `app/src/main/res/` (notably widget config in `app/src/main/res/xml/year_progress_widget.xml`).
@@ -30,7 +30,7 @@ If Gradle fails with a `JavaVersion.parse 25.0.1` error, activate the configured
 - Kotlin and Gradle Kotlin DSL are used throughout.
 - Indentation: 4 spaces.
 - Classes: `UpperCamelCase`; functions/properties: `lowerCamelCase`.
-- Packages follow `com.example.koyomidots.<layer>` and map to folder names under `app/src/main/java/`.
+- Packages follow `com.example.sioribi.<layer>` and map to folder names under `app/src/main/java/`.
 
 ## Testing Guidelines
 

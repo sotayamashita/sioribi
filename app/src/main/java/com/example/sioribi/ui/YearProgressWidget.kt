@@ -1,4 +1,4 @@
-package com.example.koyomidots.ui
+package com.example.sioribi.ui
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.toArgb
-import com.example.koyomidots.R
+import com.example.sioribi.R
 import kotlin.math.roundToInt
 
 class YearProgressWidget : GlanceAppWidget() {
