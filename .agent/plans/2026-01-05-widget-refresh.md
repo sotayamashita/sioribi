@@ -21,6 +21,7 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 - [x] (2026-01-05 13:38JST) Implemented the coordinator, AppGraph instance wiring, widget/system receiver changes, manifest updates, periodic input data, and worker logging.
 - [x] (2026-01-05 13:38JST) Added unit tests for coordinator delegation and system receiver action mapping.
 - [x] (2026-01-05 13:42JST) Investigated the Gradle test failure with --stacktrace; confirmed JavaVersion parsing error for `25.0.1` and re-ran tests (still failing).
+- [x] (2026-01-05 13:45JST) Investigated local Java toolchain selection; confirmed `java` resolves to OpenJDK 25.0.1 despite mise config specifying Corretto 21.
 - [ ] Validate on device that values appear immediately after widget add and on time change events.
 
 ## Surprises & Discoveries
@@ -30,6 +31,9 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 
 - Observation: The stacktrace shows `java.lang.IllegalArgumentException: 25.0.1` in Kotlin's `JavaVersion.parse`, implying the current JDK reports `25.0.1` which the embedded Kotlin tooling does not accept.
   Evidence: `java.lang.IllegalArgumentException: 25.0.1 at ... JavaVersion.parse(JavaVersion.java:307)`
+
+- Observation: The shell resolves `java` to `/usr/bin/java` reporting OpenJDK 25.0.1, while mise reports the current project Java as `corretto-21.0.9.10.1` and `JAVA_HOME` points at a mise install for 25.0.1.
+  Evidence: `which java -> /usr/bin/java`, `java -version -> openjdk version "25.0.1"`, `JAVA_HOME=/Users/sotayamashita/.local/share/mise/installs/java/25.0.1`, `mise current java -> corretto-21.0.9.10.1`.
 
 ## Decision Log
 
@@ -151,6 +155,18 @@ Executed commands and outputs during implementation:
     * What went wrong:
     25.0.1
     BUILD FAILED in 293ms
+
+    (repo root) which java && java -version
+    /usr/bin/java
+    openjdk version "25.0.1" 2025-10-21
+    OpenJDK Runtime Environment (build 25.0.1+8-27)
+    OpenJDK 64-Bit Server VM (build 25.0.1+8-27, mixed mode, sharing)
+
+    (repo root) echo $JAVA_HOME
+    /Users/sotayamashita/.local/share/mise/installs/java/25.0.1
+
+    (repo root) mise current java
+    corretto-21.0.9.10.1
 
 ## Validation and Acceptance
 
