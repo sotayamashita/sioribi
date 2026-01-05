@@ -9,4 +9,5 @@
     <color name="widget_dot_active">#FFF1E7D8</color>
     <color name="widget_dot_inactive">#FF3B332B</color>
     <color name="widget_text">#FFF1E7D8</color>
+    <color name="widget_background">#FF141414</color>
 </resources>

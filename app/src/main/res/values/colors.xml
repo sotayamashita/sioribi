@@ -10,4 +10,5 @@
     <color name="widget_dot_active">#FF2E2A24</color>
     <color name="widget_dot_inactive">#FFD8CBB8</color>
     <color name="widget_text">#FF2E2A24</color>
+    <color name="widget_background">#FFF4EFE6</color>
 </resources>
