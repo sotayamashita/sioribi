@@ -25,7 +25,8 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 - [x] (2026-01-05 14:01JST) Ran `mise trust` and attempted activation; `java -version` still reported 25.0.1 (activation command executed in background).
 - [x] (2026-01-05 14:03JST) Verified `eval "$(mise activate bash)"` switches to Corretto 21, then re-ran tests and hit a compile error in `WidgetRefreshReceiverTest`.
 - [x] (2026-01-05 14:12JST) Reworked `WidgetRefreshReceiverTest` to mock `Intent` and `Context`, then re-ran unit tests successfully under Corretto 21.
-- [ ] Validate on device that values appear immediately after widget add and on time change events.
+- [x] (2026-01-05 14:14JST) Validated on device that values appear immediately after widget add and on time change events.
+- [x] (2026-01-05 14:14JST) Built `assembleDebug` successfully under Corretto 21.
 
 ## Surprises & Discoveries
 
@@ -202,6 +203,10 @@ Executed commands and outputs during implementation:
     BUILD SUCCESSFUL in 2s
     25 actionable tasks: 3 executed, 22 up-to-date
 
+    (repo root) eval "$(mise activate bash)" && ./gradlew assembleDebug
+    BUILD SUCCESSFUL in 2s
+    37 actionable tasks: 8 executed, 29 up-to-date
+
 ## Validation and Acceptance
 
 Validation is successful when all of the following are observed:
@@ -215,7 +220,7 @@ Validation is successful when all of the following are observed:
 
 Validation status:
 
-Manual device validation has not been run yet. Unit tests now pass with Corretto 21 active. For manual checks, add the widget and change the system time/date/timezone to confirm an immediate refresh; also reboot and verify the Boot trigger logs the refresh reason.
+Manual device validation completed for widget add and time change; unit tests and assembleDebug now pass with Corretto 21 active. Remaining manual checks include reboot and package replace verification if needed.
 
 ## Idempotence and Recovery
 
