@@ -63,6 +63,7 @@ class YearProgressWidget : GlanceAppWidget() {
         val KEY_YEAR = intPreferencesKey("year")
         val KEY_FORMATTED = stringPreferencesKey("formatted")
 
+        private const val DEFAULT_TOTAL_DAYS = 365
         private val ACTIVE_COLOR_RES = R.color.widget_dot_active
         private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
         private val TEXT_COLOR_RES = R.color.widget_text
@@ -92,7 +93,7 @@ class YearProgressWidget : GlanceAppWidget() {
             val context = LocalContext.current
             val prefs = currentState<Preferences>()
             val currentDay = prefs[KEY_CURRENT_DAY] ?: 0
-            val totalDays = prefs[KEY_TOTAL_DAYS] ?: 365
+            val totalDays = prefs[KEY_TOTAL_DAYS] ?: DEFAULT_TOTAL_DAYS
             val year = prefs[KEY_YEAR] ?: 0
             val formatted = prefs[KEY_FORMATTED] ?: "0/0"
             val shouldTriggerRefresh = year == 0 && formatted == "0/0"

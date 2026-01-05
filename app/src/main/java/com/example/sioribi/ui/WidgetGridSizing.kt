@@ -15,6 +15,8 @@ internal data class GridLayout(
     val padding: Dp,
 )
 
+private const val DEFAULT_TOLERANCE = 0.03f
+
 internal fun computeGridLayout(
     totalDays: Int,
     size: DpSize,
@@ -61,7 +63,7 @@ internal fun computeGridLayout(
         }
     }
 
-    val tolerance = 0.03f
+    val tolerance = DEFAULT_TOLERANCE
     var bestColumns = resolvedMinColumns
     var bestRows = ceil(totalDays / resolvedMinColumns.toFloat()).toInt().coerceAtLeast(1)
     var bestDotSize = maxDotSize

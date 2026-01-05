@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit
 
 object WidgetUpdateScheduler {
     private const val UNIQUE_DAILY_WORK = "year_progress_daily"
+    private const val UPDATE_INTERVAL_HOURS = 24L
 
     fun scheduleDaily(context: Context) {
         val now = ZonedDateTime.now()
@@ -21,7 +22,7 @@ object WidgetUpdateScheduler {
         val delay = Duration.between(now, nextMidnight).toMillis().coerceAtLeast(0)
 
         val request =
-            PeriodicWorkRequestBuilder<WidgetUpdateWorker>(24, TimeUnit.HOURS)
+            PeriodicWorkRequestBuilder<WidgetUpdateWorker>(UPDATE_INTERVAL_HOURS, TimeUnit.HOURS)
                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
                 .setInputData(workDataOf(KEY_REFRESH_REASON to RefreshReason.Periodic.name))
                 .build()

@@ -6,12 +6,6 @@
     <ID>LongMethod:YearProgressWidget.kt$YearProgressWidget$@Composable private fun widgetContent(widgetSize: DpSize)</ID>
     <ID>LongParameterList:WidgetGridSizing.kt$( totalDays: Int, size: DpSize, footerHeight: Dp, footerSpacing: Dp, minColumns: Int, spacingRatio: Float, paddingRatio: Float, )</ID>
     <ID>LongParameterList:YearProgressWidget.kt$YearProgressWidget$( context: Context, gridSize: DpSize, layout: GridLayout, totalDays: Int, currentDay: Int, activeColor: Color, inactiveColor: Color, )</ID>
-    <ID>MagicNumber:GetYearProgressUseCase.kt$GetYearProgressUseCase$100</ID>
-    <ID>MagicNumber:GetYearProgressUseCase.kt$GetYearProgressUseCase$365</ID>
-    <ID>MagicNumber:GetYearProgressUseCase.kt$GetYearProgressUseCase$366</ID>
-    <ID>MagicNumber:WidgetGridSizing.kt$0.03f</ID>
-    <ID>MagicNumber:WidgetUpdateScheduler.kt$WidgetUpdateScheduler$24</ID>
-    <ID>MagicNumber:YearProgressWidget.kt$YearProgressWidget$365</ID>
     <ID>MatchingDeclarationName:WidgetGridSizing.kt$GridLayout</ID>
   </CurrentIssues>
 </SmellBaseline>
