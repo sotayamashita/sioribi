@@ -13,6 +13,5 @@
     <ID>MagicNumber:WidgetUpdateScheduler.kt$WidgetUpdateScheduler$24</ID>
     <ID>MagicNumber:YearProgressWidget.kt$YearProgressWidget$365</ID>
     <ID>MatchingDeclarationName:WidgetGridSizing.kt$GridLayout</ID>
-    <ID>MaxLineLength:YearProgressWidget.kt$YearProgressWidget$"Widget options min=${minWidth}x$minHeight resolved=${resolvedSize.width.value}x${resolvedSize.height.value}"</ID>
   </CurrentIssues>
 </SmellBaseline>

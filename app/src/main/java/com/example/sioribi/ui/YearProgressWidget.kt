@@ -282,7 +282,8 @@ class YearProgressWidget : GlanceAppWidget() {
         val resolvedSize = fallbackSize
         Log.d(
             "YearProgressWidget",
-            "Widget options min=${minWidth}x$minHeight resolved=${resolvedSize.width.value}x${resolvedSize.height.value}",
+            "Widget options min=${minWidth}x$minHeight " +
+                "resolved=${resolvedSize.width.value}x${resolvedSize.height.value}",
         )
         return resolvedSize
     }
