@@ -5,17 +5,15 @@ import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 object WidgetUpdateScheduler {
     private const val UNIQUE_DAILY_WORK = "year_progress_daily"
-    private const val UNIQUE_IMMEDIATE_WORK = "year_progress_manual"
 
     fun scheduleDaily(context: Context) {
         val now = ZonedDateTime.now()
@@ -24,20 +22,12 @@ object WidgetUpdateScheduler {
 
         val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(24, TimeUnit.HOURS)
             .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(workDataOf(KEY_REFRESH_REASON to RefreshReason.Periodic.name))
             .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             UNIQUE_DAILY_WORK,
             ExistingPeriodicWorkPolicy.UPDATE,
-            request
-        )
-    }
-
-    fun enqueueImmediate(context: Context) {
-        val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>().build()
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            UNIQUE_IMMEDIATE_WORK,
-            ExistingWorkPolicy.REPLACE,
             request
         )
     }
@@ -49,6 +39,6 @@ class ManualRefreshAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
-        WidgetUpdateScheduler.enqueueImmediate(context)
+        WidgetRefreshCoordinatorProvider.from(context).requestRefresh(RefreshReason.Manual)
     }
 }

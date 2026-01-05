@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.os.Build
 import android.util.Log
 import android.util.SizeF
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -91,6 +92,7 @@ class YearProgressWidget : GlanceAppWidget() {
             val totalDays = prefs[KEY_TOTAL_DAYS] ?: 365
             val year = prefs[KEY_YEAR] ?: 0
             val formatted = prefs[KEY_FORMATTED] ?: "0/0"
+            val shouldTriggerRefresh = year == 0 && formatted == "0/0"
             val activeColor = Color(ContextCompat.getColor(context, ACTIVE_COLOR_RES))
             val inactiveColor = Color(ContextCompat.getColor(context, INACTIVE_COLOR_RES))
             val textColorProvider = ColorProvider(
@@ -115,6 +117,14 @@ class YearProgressWidget : GlanceAppWidget() {
                 spacingRatio = DOT_SPACING_RATIO,
                 paddingRatio = PADDING_RATIO
             )
+
+            LaunchedEffect(shouldTriggerRefresh) {
+                if (shouldTriggerRefresh) {
+                    WidgetRefreshCoordinatorProvider.from(context)
+                        .requestRefresh(RefreshReason.FirstRender)
+                }
+            }
+
             val gridSize = DpSize(
                 width = (effectiveSize.width - (gridLayout.padding * 2)).coerceAtLeast(0.dp),
                 height = (effectiveSize.height - (gridLayout.padding * 2) - FOOTER_HEIGHT - FOOTER_SPACING)
@@ -262,4 +272,28 @@ class YearProgressWidget : GlanceAppWidget() {
 
 class YearProgressWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = YearProgressWidget()
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        WidgetRefreshCoordinatorProvider.from(context).requestRefresh(RefreshReason.Added)
+    }
+
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray
+    ) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        WidgetRefreshCoordinatorProvider.from(context).requestRefresh(RefreshReason.Updated)
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        WidgetRefreshCoordinatorProvider.from(context).requestRefresh(RefreshReason.OptionsChanged)
+    }
 }

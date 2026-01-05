@@ -1,17 +1,15 @@
 package com.example.koyomidots.di
 
+import android.content.Context
 import com.example.koyomidots.data.SystemTimeDataSource
 import com.example.koyomidots.data.TimeDataSource
 import com.example.koyomidots.domain.GetYearProgressUseCase
+import com.example.koyomidots.ui.WidgetRefreshCoordinator
+import com.example.koyomidots.ui.WorkManagerWidgetRefreshEnqueuer
 
-object AppGraph {
-    lateinit var timeDataSource: TimeDataSource
-        private set
-    lateinit var getYearProgressUseCase: GetYearProgressUseCase
-        private set
-
-    fun init() {
-        timeDataSource = SystemTimeDataSource()
-        getYearProgressUseCase = GetYearProgressUseCase(timeDataSource)
-    }
+class AppGraph(appContext: Context) {
+    val timeDataSource: TimeDataSource = SystemTimeDataSource()
+    val getYearProgressUseCase: GetYearProgressUseCase = GetYearProgressUseCase(timeDataSource)
+    val widgetRefreshCoordinator: WidgetRefreshCoordinator =
+        WidgetRefreshCoordinator(WorkManagerWidgetRefreshEnqueuer(appContext))
 }
