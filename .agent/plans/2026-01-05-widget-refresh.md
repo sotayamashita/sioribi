@@ -22,6 +22,7 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 - [x] (2026-01-05 13:38JST) Added unit tests for coordinator delegation and system receiver action mapping.
 - [x] (2026-01-05 13:42JST) Investigated the Gradle test failure with --stacktrace; confirmed JavaVersion parsing error for `25.0.1` and re-ran tests (still failing).
 - [x] (2026-01-05 13:45JST) Investigated local Java toolchain selection; confirmed `java` resolves to OpenJDK 25.0.1 despite mise config specifying Corretto 21.
+- [x] (2026-01-05 14:01JST) Ran `mise trust` and attempted activation; `java -version` still reported 25.0.1 (activation command executed in background).
 - [ ] Validate on device that values appear immediately after widget add and on time change events.
 
 ## Surprises & Discoveries
@@ -34,6 +35,9 @@ After this change, the Year Progress widget updates its “year” and “X/Y”
 
 - Observation: The shell resolves `java` to `/usr/bin/java` reporting OpenJDK 25.0.1, while mise reports the current project Java as `corretto-21.0.9.10.1` and `JAVA_HOME` points at a mise install for 25.0.1.
   Evidence: `which java -> /usr/bin/java`, `java -version -> openjdk version "25.0.1"`, `JAVA_HOME=/Users/sotayamashita/.local/share/mise/installs/java/25.0.1`, `mise current java -> corretto-21.0.9.10.1`.
+
+- Observation: `eval "$(mise activate bash)" & java -version` still reported 25.0.1 because the activation ran in the background, so it did not affect the subsequent `java -version` in the current shell.
+  Evidence: `java -version -> openjdk version "25.0.1"` after the backgrounded activation command.
 
 ## Decision Log
 
@@ -167,6 +171,12 @@ Executed commands and outputs during implementation:
 
     (repo root) mise current java
     corretto-21.0.9.10.1
+
+    (repo root) mise trust
+    (no output)
+
+    (repo root) eval "$(mise activate bash)" & java -version
+    openjdk version "25.0.1" 2025-10-21
 
 ## Validation and Acceptance
 
