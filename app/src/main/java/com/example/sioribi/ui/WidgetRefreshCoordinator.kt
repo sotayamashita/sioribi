@@ -14,22 +14,25 @@ interface WidgetRefreshEnqueuer {
     fun enqueueImmediate(reason: RefreshReason)
 }
 
-class WorkManagerWidgetRefreshEnqueuer(private val context: Context) : WidgetRefreshEnqueuer {
+class WorkManagerWidgetRefreshEnqueuer(
+    private val context: Context,
+) : WidgetRefreshEnqueuer {
     override fun enqueueImmediate(reason: RefreshReason) {
-        val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
-            .setInputData(workDataOf(KEY_REFRESH_REASON to reason.name))
-            .build()
+        val request =
+            OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
+                .setInputData(workDataOf(KEY_REFRESH_REASON to reason.name))
+                .build()
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNIQUE_IMMEDIATE_WORK,
             ExistingWorkPolicy.REPLACE,
-            request
+            request,
         )
     }
 }
 
 class WidgetRefreshCoordinator(
-    private val enqueuer: WidgetRefreshEnqueuer
+    private val enqueuer: WidgetRefreshEnqueuer,
 ) {
     fun requestRefresh(reason: RefreshReason) {
         enqueuer.enqueueImmediate(reason)

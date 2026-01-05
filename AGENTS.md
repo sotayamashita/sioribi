@@ -17,6 +17,10 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 
 Run these from the repo root:
 
+- `./gradlew spotlessApply` — formats Kotlin/Gradle Kotlin/XML/JSON/Markdown.
+- `./gradlew spotlessCheck` — checks formatting (Formatter).
+- `./gradlew detekt` — runs Kotlin static analysis (Linter).
+- `./gradlew lint` — runs Android Lint (Linter).
 - `./gradlew assembleDebug` — builds the debug APK.
 - `./gradlew testDebugUnitTest` — runs JVM unit tests.
 - `./gradlew connectedDebugAndroidTest` — runs instrumented tests on a device/emulator.

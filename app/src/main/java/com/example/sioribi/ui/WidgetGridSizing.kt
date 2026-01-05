@@ -12,7 +12,7 @@ internal data class GridLayout(
     val dotSize: Dp,
     val horizontalSpacing: Dp,
     val verticalSpacing: Dp,
-    val padding: Dp
+    val padding: Dp,
 )
 
 internal fun computeGridLayout(
@@ -22,11 +22,12 @@ internal fun computeGridLayout(
     footerSpacing: Dp,
     minColumns: Int,
     spacingRatio: Float,
-    paddingRatio: Float
+    paddingRatio: Float,
 ): GridLayout {
     val availableWidth = size.width.coerceAtLeast(0.dp)
-    val availableHeight = (size.height - footerHeight - footerSpacing)
-        .coerceAtLeast(0.dp)
+    val availableHeight =
+        (size.height - footerHeight - footerSpacing)
+            .coerceAtLeast(0.dp)
     val availableWidthDp = availableWidth.value
     val availableHeightDp = availableHeight.value
     if (availableWidthDp <= 0f || availableHeightDp <= 0f) {
@@ -38,7 +39,7 @@ internal fun computeGridLayout(
             dotSize = 1.dp,
             horizontalSpacing = 0.dp,
             verticalSpacing = 0.dp,
-            padding = 0.dp
+            padding = 0.dp,
         )
     }
 
@@ -50,10 +51,11 @@ internal fun computeGridLayout(
         val rows = ceil(totalDays / columns.toFloat()).toInt().coerceAtLeast(1)
         val widthUnits = columns + (columns - 1) * spacingRatio + (paddingRatio * 2)
         val heightUnits = rows + (rows - 1) * spacingRatio + (paddingRatio * 2)
-        val candidateDotSize = min(
-            availableWidthDp / widthUnits,
-            availableHeightDp / heightUnits
-        ).coerceAtLeast(1f)
+        val candidateDotSize =
+            min(
+                availableWidthDp / widthUnits,
+                availableHeightDp / heightUnits,
+            ).coerceAtLeast(1f)
         if (candidateDotSize > maxDotSize) {
             maxDotSize = candidateDotSize
         }
@@ -68,10 +70,11 @@ internal fun computeGridLayout(
         val rows = ceil(totalDays / columns.toFloat()).toInt().coerceAtLeast(1)
         val widthUnits = columns + (columns - 1) * spacingRatio + (paddingRatio * 2)
         val heightUnits = rows + (rows - 1) * spacingRatio + (paddingRatio * 2)
-        val candidateDotSize = min(
-            availableWidthDp / widthUnits,
-            availableHeightDp / heightUnits
-        ).coerceAtLeast(1f)
+        val candidateDotSize =
+            min(
+                availableWidthDp / widthUnits,
+                availableHeightDp / heightUnits,
+            ).coerceAtLeast(1f)
         if (candidateDotSize >= maxDotSize * (1f - tolerance) && columns > bestColumns) {
             bestColumns = columns
             bestRows = rows
@@ -87,16 +90,17 @@ internal fun computeGridLayout(
         dotSize = bestDotSize.dp,
         horizontalSpacing = spacing.dp,
         verticalSpacing = spacing.dp,
-        padding = padding.dp
+        padding = padding.dp,
     )
 }
 
 internal fun pickLargestSize(
     sizes: List<DpSize>?,
-    fallback: DpSize
+    fallback: DpSize,
 ): DpSize {
-    val resolved = sizes
-        ?.filter { size -> size.width.value > 0f && size.height.value > 0f }
-        ?.maxByOrNull { size -> size.width.value * size.height.value }
+    val resolved =
+        sizes
+            ?.filter { size -> size.width.value > 0f && size.height.value > 0f }
+            ?.maxByOrNull { size -> size.width.value * size.height.value }
     return resolved ?: fallback
 }

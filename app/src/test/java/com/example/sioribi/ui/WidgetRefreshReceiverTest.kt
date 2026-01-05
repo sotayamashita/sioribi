@@ -2,9 +2,9 @@ package com.example.sioribi.ui
 
 import android.content.Context
 import android.content.Intent
+import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
-import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -34,11 +34,12 @@ class WidgetRefreshReceiverTest {
         receiver.onReceive(context, intentWithAction(Intent.ACTION_TIME_CHANGED))
         receiver.onReceive(context, intentWithAction(Intent.ACTION_TIMEZONE_CHANGED))
 
-        assertThat(enqueuer.reasons).containsExactly(
-            RefreshReason.TimeChanged,
-            RefreshReason.TimeChanged,
-            RefreshReason.TimeChanged
-        ).inOrder()
+        assertThat(enqueuer.reasons)
+            .containsExactly(
+                RefreshReason.TimeChanged,
+                RefreshReason.TimeChanged,
+                RefreshReason.TimeChanged,
+            ).inOrder()
     }
 
     @Test

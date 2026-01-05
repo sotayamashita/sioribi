@@ -61,7 +61,7 @@ class GetYearProgressUseCaseTest {
     }
 
     private class FakeTimeDataSource(
-        private val date: LocalDate
+        private val date: LocalDate,
     ) : TimeDataSource {
         override fun today(): LocalDate = date
     }

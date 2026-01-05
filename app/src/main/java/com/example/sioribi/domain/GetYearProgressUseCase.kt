@@ -4,7 +4,7 @@ import com.example.sioribi.data.TimeDataSource
 import kotlin.math.roundToInt
 
 class GetYearProgressUseCase(
-    private val timeDataSource: TimeDataSource
+    private val timeDataSource: TimeDataSource,
 ) {
     fun execute(): YearProgressModel {
         val today = timeDataSource.today()
@@ -18,7 +18,7 @@ class GetYearProgressUseCase(
             totalDays = totalDays,
             year = year,
             progressPercentage = progressPercentage,
-            formattedString = formattedString
+            formattedString = formattedString,
         )
     }
 }

@@ -1,2 +1,3 @@
 [tools]
 java = "corretto-21"
+pre-commit = "latest"

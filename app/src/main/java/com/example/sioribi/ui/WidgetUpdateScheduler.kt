@@ -20,15 +20,16 @@ object WidgetUpdateScheduler {
         val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.zone)
         val delay = Duration.between(now, nextMidnight).toMillis().coerceAtLeast(0)
 
-        val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(24, TimeUnit.HOURS)
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-            .setInputData(workDataOf(KEY_REFRESH_REASON to RefreshReason.Periodic.name))
-            .build()
+        val request =
+            PeriodicWorkRequestBuilder<WidgetUpdateWorker>(24, TimeUnit.HOURS)
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInputData(workDataOf(KEY_REFRESH_REASON to RefreshReason.Periodic.name))
+                .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             UNIQUE_DAILY_WORK,
             ExistingPeriodicWorkPolicy.UPDATE,
-            request
+            request,
         )
     }
 }
@@ -37,7 +38,7 @@ class ManualRefreshAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
-        parameters: ActionParameters
+        parameters: ActionParameters,
     ) {
         WidgetRefreshCoordinatorProvider.from(context).requestRefresh(RefreshReason.Manual)
     }

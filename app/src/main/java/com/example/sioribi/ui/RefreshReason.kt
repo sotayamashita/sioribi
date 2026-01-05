@@ -9,5 +9,5 @@ enum class RefreshReason {
     TimeChanged,
     Boot,
     PackageReplaced,
-    Periodic
+    Periodic,
 }

@@ -14,6 +14,9 @@ mockk = "1.13.12"
 truth = "1.4.2"
 datastore = "1.1.1"
 composeCompiler = "1.5.14"
+spotless = "8.1.0"
+detekt = "1.23.8"
+ktlint = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,3 +37,5 @@ truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

@@ -5,5 +5,5 @@ data class YearProgressModel(
     val totalDays: Int,
     val year: Int,
     val progressPercentage: Int,
-    val formattedString: String
+    val formattedString: String,
 )

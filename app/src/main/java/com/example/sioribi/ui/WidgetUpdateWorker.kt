@@ -11,7 +11,7 @@ import com.example.sioribi.SioribiApplication
 
 class WidgetUpdateWorker(
     appContext: Context,
-    params: WorkerParameters
+    params: WorkerParameters,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         val appGraph = (applicationContext as SioribiApplication).appGraph
@@ -33,7 +33,7 @@ class WidgetUpdateWorker(
         val reason = inputData.getString(KEY_REFRESH_REASON) ?: "Unknown"
         Log.d(
             "WidgetUpdateWorker",
-            "Updated widget for ${model.year}: ${model.formattedString} reason=$reason"
+            "Updated widget for ${model.year}: ${model.formattedString} reason=$reason",
         )
         return Result.success()
     }
