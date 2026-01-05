@@ -56,22 +56,22 @@ import androidx.glance.unit.ColorProvider
 import com.example.sioribi.R
 import kotlin.math.roundToInt
 
+private const val DEFAULT_TOTAL_DAYS = 365
+private val ACTIVE_COLOR_RES = R.color.widget_dot_active
+private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
+private val TEXT_COLOR_RES = R.color.widget_text
+private val FOOTER_SPACING = 12.dp
+private val FOOTER_HEIGHT = 20.dp
+private const val MIN_GRID_COLUMNS = 7
+private const val DOT_SPACING_RATIO = 0.55f
+private const val PADDING_RATIO = 1.8f
+
 class YearProgressWidget : GlanceAppWidget() {
     companion object {
         val KEY_CURRENT_DAY = intPreferencesKey("current_day")
         val KEY_TOTAL_DAYS = intPreferencesKey("total_days")
         val KEY_YEAR = intPreferencesKey("year")
         val KEY_FORMATTED = stringPreferencesKey("formatted")
-
-        private const val DEFAULT_TOTAL_DAYS = 365
-        private val ACTIVE_COLOR_RES = R.color.widget_dot_active
-        private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
-        private val TEXT_COLOR_RES = R.color.widget_text
-        private val FOOTER_SPACING = 12.dp
-        private val FOOTER_HEIGHT = 20.dp
-        private const val MIN_GRID_COLUMNS = 7
-        private const val DOT_SPACING_RATIO = 0.55f
-        private const val PADDING_RATIO = 1.8f
     }
 
     override val stateDefinition = PreferencesGlanceStateDefinition
@@ -109,22 +109,8 @@ class YearProgressWidget : GlanceAppWidget() {
                 )
 
             val localSize = LocalSize.current
-            val effectiveSize =
-                if (localSize.width.value > 0f && localSize.height.value > 0f) {
-                    localSize
-                } else {
-                    widgetSize
-                }
-            val gridLayout =
-                computeGridLayout(
-                    totalDays = totalDays,
-                    size = effectiveSize,
-                    footerHeight = FOOTER_HEIGHT,
-                    footerSpacing = FOOTER_SPACING,
-                    minColumns = MIN_GRID_COLUMNS,
-                    spacingRatio = DOT_SPACING_RATIO,
-                    paddingRatio = PADDING_RATIO,
-                )
+            val effectiveSize = resolveEffectiveSize(localSize, widgetSize)
+            val gridLayout = buildGridLayout(totalDays, effectiveSize)
 
             LaunchedEffect(shouldTriggerRefresh) {
                 if (shouldTriggerRefresh) {
@@ -134,160 +120,252 @@ class YearProgressWidget : GlanceAppWidget() {
                 }
             }
 
-            val gridSize =
-                DpSize(
-                    width = (effectiveSize.width - (gridLayout.padding * 2)).coerceAtLeast(0.dp),
-                    height =
-                        (effectiveSize.height - (gridLayout.padding * 2) - FOOTER_HEIGHT - FOOTER_SPACING)
-                            .coerceAtLeast(0.dp),
-                )
-            Log.d(
-                "YearProgressWidget",
-                "Widget size=${widgetSize.width.value}x${widgetSize.height.value} " +
-                    "local=${localSize.width.value}x${localSize.height.value} " +
-                    "effective=${effectiveSize.width.value}x${effectiveSize.height.value} " +
-                    "grid=${gridSize.width.value}x${gridSize.height.value} " +
-                    "grid=${gridLayout.columns}x${gridLayout.rows} " +
-                    "dot=${gridLayout.dotSize.value} " +
-                    "spacing=${gridLayout.horizontalSpacing.value}x${gridLayout.verticalSpacing.value} " +
-                    "padding=${gridLayout.padding.value}",
+            val gridSize = buildGridSize(effectiveSize, gridLayout)
+            logGridLayout(widgetSize, localSize, effectiveSize, gridSize, gridLayout)
+
+            widgetLayout(
+                context = context,
+                state =
+                    WidgetLayoutState(
+                        gridLayout = gridLayout,
+                        gridSize = gridSize,
+                        backgroundColorProvider = backgroundColorProvider,
+                        textColorProvider = textColorProvider,
+                        year = year,
+                        formatted = formatted,
+                        totalDays = totalDays,
+                        currentDay = currentDay,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                    ),
             )
-
-            Column(
-                modifier =
-                    GlanceModifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                        .padding(gridLayout.padding)
-                        .background(backgroundColorProvider)
-                        .clickable(actionRunCallback<ManualRefreshAction>()),
-                horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-            ) {
-                val bitmap =
-                    remember(
-                        totalDays,
-                        currentDay,
-                        gridSize,
-                        gridLayout,
-                    ) {
-                        buildDotBitmap(
-                            context = context,
-                            gridSize = gridSize,
-                            layout = gridLayout,
-                            totalDays = totalDays,
-                            currentDay = currentDay,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                        )
-                    }
-                Image(
-                    provider = ImageProvider(bitmap = bitmap),
-                    contentDescription = null,
-                    modifier =
-                        GlanceModifier
-                            .fillMaxWidth()
-                            .height(gridSize.height),
-                    contentScale = ContentScale.FillBounds,
-                )
-
-                Spacer(modifier = GlanceModifier.height(FOOTER_SPACING))
-
-                Row(
-                    modifier =
-                        GlanceModifier
-                            .fillMaxWidth(),
-                    horizontalAlignment = Alignment.Horizontal.Start,
-                ) {
-                    Text(
-                        text = if (year == 0) "----" else year.toString(),
-                        style =
-                            TextStyle(
-                                color = textColorProvider,
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily.Monospace,
-                            ),
-                    )
-                    Text(
-                        text = formatted,
-                        modifier = GlanceModifier.fillMaxWidth(),
-                        style =
-                            TextStyle(
-                                color = textColorProvider,
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily.Monospace,
-                                textAlign = TextAlign.End,
-                            ),
-                    )
-                }
-            }
         }
     }
+}
 
-    private fun buildDotBitmap(
-        context: Context,
-        gridSize: DpSize,
-        layout: GridLayout,
-        totalDays: Int,
-        currentDay: Int,
-        activeColor: Color,
-        inactiveColor: Color,
-    ): Bitmap {
-        val density = context.resources.displayMetrics.density
-        val widthPx = (gridSize.width.value * density).roundToInt().coerceAtLeast(1)
-        val heightPx = (gridSize.height.value * density).roundToInt().coerceAtLeast(1)
-        val bitmap = createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val activePaint =
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = activeColor.toArgb()
-                style = Paint.Style.FILL
-            }
-        val inactivePaint =
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = inactiveColor.toArgb()
-                style = Paint.Style.FILL
-            }
+private data class WidgetLayoutState(
+    val gridLayout: GridLayout,
+    val gridSize: DpSize,
+    val backgroundColorProvider: ColorProvider,
+    val textColorProvider: ColorProvider,
+    val year: Int,
+    val formatted: String,
+    val totalDays: Int,
+    val currentDay: Int,
+    val activeColor: Color,
+    val inactiveColor: Color,
+)
 
-        val dotSizePx = layout.dotSize.value * density
-        val hSpacingPx = layout.horizontalSpacing.value * density
-        val vSpacingPx = layout.verticalSpacing.value * density
-        val padPx = 0f
-        if (dotSizePx <= 0f) {
-            return bitmap
+@Composable
+private fun widgetLayout(
+    context: Context,
+    state: WidgetLayoutState,
+) {
+    Column(
+        modifier =
+            GlanceModifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .padding(state.gridLayout.padding)
+                .background(state.backgroundColorProvider)
+                .clickable(actionRunCallback<ManualRefreshAction>()),
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+    ) {
+        widgetGridImage(context, state)
+        Spacer(modifier = GlanceModifier.height(FOOTER_SPACING))
+        widgetFooter(state)
+    }
+}
+
+@Composable
+private fun widgetGridImage(
+    context: Context,
+    state: WidgetLayoutState,
+) {
+    val bitmap =
+        remember(
+            state.totalDays,
+            state.currentDay,
+            state.gridSize,
+            state.gridLayout,
+        ) {
+            buildDotBitmap(
+                DotBitmapSpec(
+                    context = context,
+                    gridSize = state.gridSize,
+                    layout = state.gridLayout,
+                    totalDays = state.totalDays,
+                    currentDay = state.currentDay,
+                    activeColor = state.activeColor,
+                    inactiveColor = state.inactiveColor,
+                ),
+            )
+        }
+    Image(
+        provider = ImageProvider(bitmap = bitmap),
+        contentDescription = null,
+        modifier =
+            GlanceModifier
+                .fillMaxWidth()
+                .height(state.gridSize.height),
+        contentScale = ContentScale.FillBounds,
+    )
+}
+
+@Composable
+private fun widgetFooter(state: WidgetLayoutState) {
+    Row(
+        modifier =
+            GlanceModifier
+                .fillMaxWidth(),
+        horizontalAlignment = Alignment.Horizontal.Start,
+    ) {
+        Text(
+            text = if (state.year == 0) "----" else state.year.toString(),
+            style =
+                TextStyle(
+                    color = state.textColorProvider,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Monospace,
+                ),
+        )
+        Text(
+            text = state.formatted,
+            modifier = GlanceModifier.fillMaxWidth(),
+            style =
+                TextStyle(
+                    color = state.textColorProvider,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Monospace,
+                    textAlign = TextAlign.End,
+                ),
+        )
+    }
+}
+
+private data class DotBitmapSpec(
+    val context: Context,
+    val gridSize: DpSize,
+    val layout: GridLayout,
+    val totalDays: Int,
+    val currentDay: Int,
+    val activeColor: Color,
+    val inactiveColor: Color,
+)
+
+private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
+    val density = spec.context.resources.displayMetrics.density
+    val widthPx = (spec.gridSize.width.value * density).roundToInt().coerceAtLeast(1)
+    val heightPx = (spec.gridSize.height.value * density).roundToInt().coerceAtLeast(1)
+    val bitmap = createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val activePaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = spec.activeColor.toArgb()
+            style = Paint.Style.FILL
+        }
+    val inactivePaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = spec.inactiveColor.toArgb()
+            style = Paint.Style.FILL
         }
 
-        for (index in 1..totalDays) {
-            val row = (index - 1) / layout.columns
-            val col = (index - 1) % layout.columns
-            val x = padPx + col * (dotSizePx + hSpacingPx)
-            val y = padPx + row * (dotSizePx + vSpacingPx)
-            val radius = dotSizePx / 2f
-            val paint = if (index <= currentDay) activePaint else inactivePaint
-            canvas.drawCircle(x + radius, y + radius, radius, paint)
-        }
-
+    val dotSizePx = spec.layout.dotSize.value * density
+    val hSpacingPx = spec.layout.horizontalSpacing.value * density
+    val vSpacingPx = spec.layout.verticalSpacing.value * density
+    val padPx = 0f
+    if (dotSizePx <= 0f) {
         return bitmap
     }
 
-    private fun resolveWidgetSize(
-        context: Context,
-        glanceId: GlanceId,
-    ): DpSize {
-        val manager = GlanceAppWidgetManager(context)
-        val appWidgetId = manager.getAppWidgetId(glanceId)
-        val appWidgetManager = AppWidgetManager.getInstance(context)
-        val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
-        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
-        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        val fallbackSize = DpSize(minWidth.dp, minHeight.dp)
-        val resolvedSize = fallbackSize
-        Log.d(
-            "YearProgressWidget",
-            "Widget options min=${minWidth}x$minHeight " +
-                "resolved=${resolvedSize.width.value}x${resolvedSize.height.value}",
-        )
-        return resolvedSize
+    for (index in 1..spec.totalDays) {
+        val row = (index - 1) / spec.layout.columns
+        val col = (index - 1) % spec.layout.columns
+        val x = padPx + col * (dotSizePx + hSpacingPx)
+        val y = padPx + row * (dotSizePx + vSpacingPx)
+        val radius = dotSizePx / 2f
+        val paint = if (index <= spec.currentDay) activePaint else inactivePaint
+        canvas.drawCircle(x + radius, y + radius, radius, paint)
     }
+
+    return bitmap
+}
+
+private fun resolveEffectiveSize(
+    localSize: DpSize,
+    widgetSize: DpSize,
+): DpSize =
+    if (localSize.width.value > 0f && localSize.height.value > 0f) {
+        localSize
+    } else {
+        widgetSize
+    }
+
+private fun buildGridLayout(
+    totalDays: Int,
+    size: DpSize,
+): GridLayout =
+    computeGridLayout(
+        GridLayoutConfig(
+            totalDays = totalDays,
+            size = size,
+            footerHeight = FOOTER_HEIGHT,
+            footerSpacing = FOOTER_SPACING,
+            minColumns = MIN_GRID_COLUMNS,
+            spacingRatio = DOT_SPACING_RATIO,
+            paddingRatio = PADDING_RATIO,
+        ),
+    )
+
+private fun buildGridSize(
+    effectiveSize: DpSize,
+    gridLayout: GridLayout,
+): DpSize =
+    DpSize(
+        width = (effectiveSize.width - (gridLayout.padding * 2)).coerceAtLeast(0.dp),
+        height =
+            (effectiveSize.height - (gridLayout.padding * 2) - FOOTER_HEIGHT - FOOTER_SPACING)
+                .coerceAtLeast(0.dp),
+    )
+
+private fun logGridLayout(
+    widgetSize: DpSize,
+    localSize: DpSize,
+    effectiveSize: DpSize,
+    gridSize: DpSize,
+    gridLayout: GridLayout,
+) {
+    Log.d(
+        "YearProgressWidget",
+        "Widget size=${widgetSize.width.value}x${widgetSize.height.value} " +
+            "local=${localSize.width.value}x${localSize.height.value} " +
+            "effective=${effectiveSize.width.value}x${effectiveSize.height.value} " +
+            "grid=${gridSize.width.value}x${gridSize.height.value} " +
+            "grid=${gridLayout.columns}x${gridLayout.rows} " +
+            "dot=${gridLayout.dotSize.value} " +
+            "spacing=${gridLayout.horizontalSpacing.value}x${gridLayout.verticalSpacing.value} " +
+            "padding=${gridLayout.padding.value}",
+    )
+}
+
+private fun resolveWidgetSize(
+    context: Context,
+    glanceId: GlanceId,
+): DpSize {
+    val manager = GlanceAppWidgetManager(context)
+    val appWidgetId = manager.getAppWidgetId(glanceId)
+    val appWidgetManager = AppWidgetManager.getInstance(context)
+    val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+    val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+    val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+    val fallbackSize = DpSize(minWidth.dp, minHeight.dp)
+    val resolvedSize = fallbackSize
+    Log.d(
+        "YearProgressWidget",
+        "Widget options min=${minWidth}x$minHeight " +
+            "resolved=${resolvedSize.width.value}x${resolvedSize.height.value}",
+    )
+    return resolvedSize
 }
 
 class YearProgressWidgetReceiver : GlanceAppWidgetReceiver() {

@@ -1,11 +1,5 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>LongMethod:WidgetGridSizing.kt$internal fun computeGridLayout( totalDays: Int, size: DpSize, footerHeight: Dp, footerSpacing: Dp, minColumns: Int, spacingRatio: Float, paddingRatio: Float, ): GridLayout</ID>
-    <ID>LongMethod:YearProgressWidget.kt$YearProgressWidget$@Composable private fun widgetContent(widgetSize: DpSize)</ID>
-    <ID>LongParameterList:WidgetGridSizing.kt$( totalDays: Int, size: DpSize, footerHeight: Dp, footerSpacing: Dp, minColumns: Int, spacingRatio: Float, paddingRatio: Float, )</ID>
-    <ID>LongParameterList:YearProgressWidget.kt$YearProgressWidget$( context: Context, gridSize: DpSize, layout: GridLayout, totalDays: Int, currentDay: Int, activeColor: Color, inactiveColor: Color, )</ID>
-    <ID>MatchingDeclarationName:WidgetGridSizing.kt$GridLayout</ID>
-  </CurrentIssues>
+  <CurrentIssues/>
 </SmellBaseline>

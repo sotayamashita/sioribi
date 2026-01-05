@@ -15,26 +15,29 @@ internal data class GridLayout(
     val padding: Dp,
 )
 
+internal data class GridLayoutConfig(
+    val totalDays: Int,
+    val size: DpSize,
+    val footerHeight: Dp,
+    val footerSpacing: Dp,
+    val minColumns: Int,
+    val spacingRatio: Float,
+    val paddingRatio: Float,
+)
+
 private const val DEFAULT_TOLERANCE = 0.03f
 
-internal fun computeGridLayout(
-    totalDays: Int,
-    size: DpSize,
-    footerHeight: Dp,
-    footerSpacing: Dp,
-    minColumns: Int,
-    spacingRatio: Float,
-    paddingRatio: Float,
-): GridLayout {
-    val availableWidth = size.width.coerceAtLeast(0.dp)
+internal fun computeGridLayout(config: GridLayoutConfig): GridLayout {
+    val availableWidth = config.size.width.coerceAtLeast(0.dp)
     val availableHeight =
-        (size.height - footerHeight - footerSpacing)
+        (config.size.height - config.footerHeight - config.footerSpacing)
             .coerceAtLeast(0.dp)
     val availableWidthDp = availableWidth.value
     val availableHeightDp = availableHeight.value
     if (availableWidthDp <= 0f || availableHeightDp <= 0f) {
-        val fallbackColumns = minColumns.coerceAtLeast(1)
-        val fallbackRows = ceil(totalDays / fallbackColumns.toFloat()).toInt().coerceAtLeast(1)
+        val fallbackColumns = config.minColumns.coerceAtLeast(1)
+        val fallbackRows =
+            ceil(config.totalDays / fallbackColumns.toFloat()).toInt().coerceAtLeast(1)
         return GridLayout(
             columns = fallbackColumns,
             rows = fallbackRows,
@@ -45,55 +48,112 @@ internal fun computeGridLayout(
         )
     }
 
-    val resolvedMinColumns = minColumns.coerceAtLeast(1)
-    val maxColumns = totalDays.coerceAtLeast(resolvedMinColumns)
-    var maxDotSize = 1f
-
-    for (columns in resolvedMinColumns..maxColumns) {
-        val rows = ceil(totalDays / columns.toFloat()).toInt().coerceAtLeast(1)
-        val widthUnits = columns + (columns - 1) * spacingRatio + (paddingRatio * 2)
-        val heightUnits = rows + (rows - 1) * spacingRatio + (paddingRatio * 2)
-        val candidateDotSize =
-            min(
-                availableWidthDp / widthUnits,
-                availableHeightDp / heightUnits,
-            ).coerceAtLeast(1f)
-        if (candidateDotSize > maxDotSize) {
-            maxDotSize = candidateDotSize
-        }
-    }
-
-    val tolerance = DEFAULT_TOLERANCE
-    var bestColumns = resolvedMinColumns
-    var bestRows = ceil(totalDays / resolvedMinColumns.toFloat()).toInt().coerceAtLeast(1)
-    var bestDotSize = maxDotSize
-
-    for (columns in resolvedMinColumns..maxColumns) {
-        val rows = ceil(totalDays / columns.toFloat()).toInt().coerceAtLeast(1)
-        val widthUnits = columns + (columns - 1) * spacingRatio + (paddingRatio * 2)
-        val heightUnits = rows + (rows - 1) * spacingRatio + (paddingRatio * 2)
-        val candidateDotSize =
-            min(
-                availableWidthDp / widthUnits,
-                availableHeightDp / heightUnits,
-            ).coerceAtLeast(1f)
-        if (candidateDotSize >= maxDotSize * (1f - tolerance) && columns > bestColumns) {
-            bestColumns = columns
-            bestRows = rows
-            bestDotSize = candidateDotSize
-        }
-    }
-
-    val spacing = bestDotSize * spacingRatio
-    val padding = bestDotSize * paddingRatio
+    val resolvedMinColumns = config.minColumns.coerceAtLeast(1)
+    val maxColumns = config.totalDays.coerceAtLeast(resolvedMinColumns)
+    val sizingInput =
+        LayoutSizingInput(
+            totalDays = config.totalDays,
+            availableWidthDp = availableWidthDp,
+            availableHeightDp = availableHeightDp,
+            spacingRatio = config.spacingRatio,
+            paddingRatio = config.paddingRatio,
+        )
+    val maxDotSize =
+        findMaxDotSize(
+            input = sizingInput,
+            resolvedMinColumns = resolvedMinColumns,
+            maxColumns = maxColumns,
+        )
+    val bestFit =
+        findBestFit(
+            input = sizingInput,
+            resolvedMinColumns = resolvedMinColumns,
+            maxColumns = maxColumns,
+            maxDotSize = maxDotSize,
+        )
+    val spacing = bestFit.dotSize * config.spacingRatio
+    val padding = bestFit.dotSize * config.paddingRatio
     return GridLayout(
-        columns = bestColumns,
-        rows = bestRows,
-        dotSize = bestDotSize.dp,
+        columns = bestFit.columns,
+        rows = bestFit.rows,
+        dotSize = bestFit.dotSize.dp,
         horizontalSpacing = spacing.dp,
         verticalSpacing = spacing.dp,
         padding = padding.dp,
     )
+}
+
+private data class BestFit(
+    val columns: Int,
+    val rows: Int,
+    val dotSize: Float,
+)
+
+private data class LayoutSizingInput(
+    val totalDays: Int,
+    val availableWidthDp: Float,
+    val availableHeightDp: Float,
+    val spacingRatio: Float,
+    val paddingRatio: Float,
+)
+
+private fun findMaxDotSize(
+    input: LayoutSizingInput,
+    resolvedMinColumns: Int,
+    maxColumns: Int,
+): Float {
+    var maxDotSize = 1f
+    for (columns in resolvedMinColumns..maxColumns) {
+        val candidateDotSize =
+            computeCandidateDotSize(
+                input = input,
+                columns = columns,
+            )
+        if (candidateDotSize > maxDotSize) {
+            maxDotSize = candidateDotSize
+        }
+    }
+    return maxDotSize
+}
+
+private fun findBestFit(
+    input: LayoutSizingInput,
+    resolvedMinColumns: Int,
+    maxColumns: Int,
+    maxDotSize: Float,
+): BestFit {
+    val tolerance = DEFAULT_TOLERANCE
+    var bestColumns = resolvedMinColumns
+    var bestRows = ceil(input.totalDays / resolvedMinColumns.toFloat()).toInt().coerceAtLeast(1)
+    var bestDotSize = maxDotSize
+
+    for (columns in resolvedMinColumns..maxColumns) {
+        val candidateDotSize =
+            computeCandidateDotSize(
+                input = input,
+                columns = columns,
+            )
+        if (candidateDotSize >= maxDotSize * (1f - tolerance) && columns > bestColumns) {
+            bestColumns = columns
+            bestRows = ceil(input.totalDays / columns.toFloat()).toInt().coerceAtLeast(1)
+            bestDotSize = candidateDotSize
+        }
+    }
+
+    return BestFit(columns = bestColumns, rows = bestRows, dotSize = bestDotSize)
+}
+
+private fun computeCandidateDotSize(
+    input: LayoutSizingInput,
+    columns: Int,
+): Float {
+    val rows = ceil(input.totalDays / columns.toFloat()).toInt().coerceAtLeast(1)
+    val widthUnits = columns + (columns - 1) * input.spacingRatio + (input.paddingRatio * 2)
+    val heightUnits = rows + (rows - 1) * input.spacingRatio + (input.paddingRatio * 2)
+    return min(
+        input.availableWidthDp / widthUnits,
+        input.availableHeightDp / heightUnits,
+    ).coerceAtLeast(1f)
 }
 
 internal fun pickLargestSize(
