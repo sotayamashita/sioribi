@@ -17,3 +17,9 @@ repos:
         language: system
         pass_filenames: false
         files: "\\.(kt|kts)$"
+      - id: unit-tests
+        name: unit tests
+        entry: ./gradlew testDebugUnitTest
+        language: system
+        pass_filenames: false
+        files: "\\.(kt|kts)$"
