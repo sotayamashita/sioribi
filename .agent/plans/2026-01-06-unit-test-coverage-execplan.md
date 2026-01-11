@@ -17,6 +17,7 @@ After this change, the project will have broader unit test coverage over domain 
 - [x] (2026-01-11 20:52JST) Expand unit tests in `app/src/test/java/com/example/sioribi/` for domain/data logic and edge cases.
 - [x] (2026-01-11 20:52JST) Capture baseline coverage report and set an initial coverage verification rule.
 - [x] (2026-01-11 20:52JST) Validate tests and coverage tasks on the project.
+- [x] (2026-01-11 21:15JST) Phase 1-3 expansion: added additional data/domain tests, UI sizing edge cases, and a clock-injected scheduler helper with unit tests.
 
 ## Surprises & Discoveries
 
@@ -28,6 +29,12 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Observation: The pre-commit hook failed on `spotlessKotlinCheck` due to formatting in `YearProgressModelTest.kt`.
   Evidence: `spotlessKotlinCheck FAILED ... app/src/test/java/com/example/sioribi/domain/YearProgressModelTest.kt`.
+
+- Observation: The pre-commit hook stashed unstaged changes during the scheduler helper commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768133831-30304.`
+
+- Observation: The pre-commit hook stashed unstaged changes during the core test expansion commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768133865-31180.`
 
 ## Decision Log
 
@@ -59,6 +66,14 @@ After this change, the project will have broader unit test coverage over domain 
   Rationale: Gradle warns that `buildDir` access is deprecated; using the new API avoids future breakage.
   Date/Author: 2026-01-11, Codex
 
+- Decision: For the next Phase 1-3 expansion, avoid introducing Hilt and prefer constructor injection with fakes; add clock-injected helpers for time-based logic.
+  Rationale: The testing guidance states Hilt is unnecessary for unit tests and recommends fakes; this keeps tests fast and focused on JVM logic.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Extract `computeInitialDelayMillis` in `WidgetUpdateScheduler` to accept a `Clock` and keep `scheduleDaily` behavior unchanged.
+  Rationale: A clock-injected helper makes time-based logic testable in JVM unit tests without Robolectric or Hilt.
+  Date/Author: 2026-01-11, Codex
+
 ## Outcomes & Retrospective
 
 Milestone complete (2026-01-11 20:52JST): Added JVM tests around domain/data logic, JaCoCo report + verification tasks, and CI artifact upload. Coverage verification now enforces a 0.33 line ratio baseline while leaving room for future improvements.
@@ -86,6 +101,14 @@ In the GitHub Actions workflow, after the tests complete, add a step to upload t
 Second, expand unit tests for domain and data logic. In `app/src/test/java/com/example/sioribi/domain/`, add cases for edge conditions for `GetYearProgressUseCase` and `YearProgressModel` (for example, boundaries at start/end of year, leap year day handling, and negative or out-of-range inputs). In `app/src/test/java/com/example/sioribi/data/`, add tests for `SystemTimeDataSource` by injecting a fake `TimeDataSource` or by refactoring to allow a fake clock dependency so that tests do not depend on the system clock. In `app/src/test/java/com/example/sioribi/ui/`, add missing pure-logic tests for classes that do not require Android framework types; for anything that currently depends on Android framework classes, extract small pure Kotlin helpers and unit-test those helpers instead of adding instrumented tests. Keep the overall test mix skewed toward fast local tests rather than slower device tests.
 
 Finally, update documentation notes in the repository (for example in `README.md` or `docs/`) to record how to run unit tests and generate coverage reports, including the Gradle commands and the report output locations.
+
+Phase 1-3 test expansion plan (planning only, no implementation in this step): prioritize data/domain unit tests and pure Kotlin UI logic tests, while avoiding Hilt for unit tests per the architecture guidance. Use constructor injection with fakes to isolate dependencies. For Android framework-bound logic, introduce small pure Kotlin helpers or injectable time sources to make calculations unit-testable. Specifically, add a helper in `app/src/main/java/com/example/sioribi/ui/WidgetUpdateScheduler.kt` that calculates the initial delay using an injected `Clock`, and have `scheduleDaily` call it so that unit tests can cover edge cases around midnight without instrumented tests.
+
+Phase 1 (data/domain, highest priority): add unit tests for `SystemTimeDataSource` covering date boundaries and time zone offsets using injected `Clock` instances (for example UTC vs. local offsets) to validate deterministic behavior. Expand `GetYearProgressUseCase` tests to cover additional year boundaries and rounding behavior (start/end of year, leap-day, and mid-year rounding cases). Add a simple `YearProgressModel` test that verifies values are preserved as-is to protect against unintended validation logic.
+
+Phase 2 (UI pure logic): expand `WidgetGridSizing.kt` tests for edge cases where widget sizes are zero or negative, and validate fallbacks (minimum columns/rows, dot size floor). Add tests for `pickLargestSize` when `sizes` is null or contains invalid entries, ensuring fallback is returned. These tests remain JVM-only and avoid Android framework types beyond `Dp`/`DpSize`.
+
+Phase 3 (light refactor to enable tests): refactor `WidgetUpdateScheduler` by extracting delay calculation into a pure Kotlin helper that accepts a `Clock` and zone (or derives zone from the clock) and returns the initial delay in milliseconds. Add unit tests for that helper to cover midnight boundary cases (just before midnight, exactly at midnight) and verify the delay is clamped to non-negative values. If coverage gaps remain in `WidgetUpdateWorker` and the logic is still Android-bound, extract the preference-write logic into a pure function and unit-test it separately; avoid instrumented tests unless unavoidable.
 
 ## Concrete Steps
 
@@ -154,6 +177,49 @@ Concrete Steps update (2026-01-11 20:52JST): Ran unit tests, generated the JaCoC
     git commit -m "feat(test): add jacoco coverage and unit test expansions"
     [feat/unit-test-coverage 85ecd29] feat(test): add jacoco coverage and unit test expansions
 
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    git commit -m "refactor(ui): extract scheduler delay helper"
+    [feat/unit-test-coverage c39070d] refactor(ui): extract scheduler delay helper
+
+    git commit -m "test: expand unit coverage for core logic"
+    [feat/unit-test-coverage 3b3133a] test: expand unit coverage for core logic
+
+Concrete Steps update (2026-01-11 21:15JST): Added tests in data/domain/ui, introduced `computeInitialDelayMillis` helper, and ran unit tests after each batch.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/test/java/com/example/sioribi/data/SystemTimeDataSourceTest.kt
+      - app/src/test/java/com/example/sioribi/domain/GetYearProgressUseCaseTest.kt
+      - app/src/test/java/com/example/sioribi/ui/WidgetGridSizingTest.kt
+      - app/src/main/java/com/example/sioribi/ui/WidgetUpdateScheduler.kt
+      - app/src/test/java/com/example/sioribi/ui/WidgetUpdateSchedulerTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
 ## Validation and Acceptance
 
 - Running `./gradlew testDebugUnitTest` succeeds with all unit tests passing.
@@ -166,6 +232,8 @@ Concrete Steps update (2026-01-11 20:52JST): Ran unit tests, generated the JaCoC
 Validation update (2026-01-11 20:52JST): Not executed yet for the JaCoCo tasks; will run `./gradlew testDebugUnitTest jacocoTestReport` after expanding tests and capturing baseline.
 
 Validation update (2026-01-11 20:52JST): `./gradlew testDebugUnitTest` passed, `./gradlew testDebugUnitTest jacocoTestReport` generated reports, and `./gradlew jacocoTestCoverageVerification` passed with a 0.33 line coverage minimum. HTML report confirmed at `app/build/reports/jacoco/jacocoTestReport/html/index.html`.
+
+Validation update (2026-01-11 21:15JST): Re-ran `./gradlew testDebugUnitTest` after each added test batch; all runs passed.
 
 ## Idempotence and Recovery
 
@@ -200,4 +268,16 @@ Plan Change Note (2026-01-11 20:52JST): Added the git commit entry to Concrete S
 
 Plan Change Note (2026-01-11 20:56JST): Translated README.md and this ExecPlan entry to English per language requirements.
 
-Issue Tracking Note: This plan is tracked in https://github.com/sotayamashita/sioribi/issues/2.
+Plan Change Note (2026-01-11 21:10JST): Added the Phase 1-3 test expansion plan aligned with the local testing and Hilt guidance.
+
+Plan Change Note (2026-01-11 21:13JST): Added concrete Phase 1-3 test targets and refactor steps (data/domain, UI sizing, and clock-injected scheduler helper) as requested.
+
+Plan Change Note (2026-01-11 21:15JST): Recorded Phase 1-3 implementation progress, scheduler helper decision, and repeated unit test validations.
+
+Plan Change Note (2026-01-11 21:16JST): Ran Spotless to ensure formatting after the latest test additions.
+
+Plan Change Note (2026-01-11 21:17JST): Recorded the scheduler helper commit and noted the pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:17JST): Recorded the core unit test expansion commit and noted the pre-commit stash behavior.
+
+Issue Tracking Note: This plan is tracked in repository issue #2.
