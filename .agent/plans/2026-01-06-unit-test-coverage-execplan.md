@@ -21,6 +21,7 @@ After this change, the project will have broader unit test coverage over domain 
 - [x] (2026-01-11 21:20JST) Phase 3 continuation: extracted `writeModelToPreferences` from `WidgetUpdateWorker` and added unit tests.
 - [x] (2026-01-11 21:25JST) UI/DI coverage: extracted `resolveRefreshReason` helper and added receiver tests for null/unknown actions.
 - [x] (2026-01-11 21:37JST) UI drawing logic: extracted bitmap sizing helpers from `YearProgressWidget` and added unit tests.
+- [x] (2026-01-11 21:45JST) UI drawing logic: extracted dot position calculation and added unit tests.
 
 ## Surprises & Discoveries
 
@@ -59,6 +60,9 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Observation: The pre-commit hook stashed unstaged changes during the widget bitmap helper commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768135158-46179.`
+
+- Observation: The pre-commit hook stashed unstaged changes during the dot position math commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768135564-48957.`
 
 ## Decision Log
 
@@ -120,6 +124,10 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Decision: Move bitmap sizing helpers into `YearProgressWidgetDrawing.kt` to keep `YearProgressWidget.kt` below detekt's `TooManyFunctions` threshold.
   Rationale: Splitting the file avoids suppressing detekt and keeps widget rendering code readable.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Extract dot position calculation into `computeDotPositions` for deterministic unit tests.
+  Rationale: Coordinates are pure math and can be validated without rendering.
   Date/Author: 2026-01-11, Codex
 
 ## Outcomes & Retrospective
@@ -363,6 +371,23 @@ Concrete Steps update (2026-01-11 21:38JST): Moved bitmap helpers into `YearProg
     ./gradlew spotlessApply
     BUILD SUCCESSFUL in 1s
 
+Concrete Steps update (2026-01-11 21:45JST): Extracted dot position math, added tests, and reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidgetDrawing.kt
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/test/java/com/example/sioribi/ui/YearProgressWidgetDotPositionsTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 3s
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    git commit -m "test(ui): cover dot position math"
+    [feat/unit-test-coverage 020c7f3] test(ui): cover dot position math
+
     git commit -m "refactor(ui): extract widget bitmap helpers"
     [feat/unit-test-coverage 2b1c56c] refactor(ui): extract widget bitmap helpers
 
@@ -398,6 +423,8 @@ Validation update (2026-01-11 21:28JST): `./gradlew testDebugUnitTest` passed af
 Validation update (2026-01-11 21:37JST): `./gradlew testDebugUnitTest` passed after adding bitmap sizing helper tests.
 
 Validation update (2026-01-11 21:38JST): `./gradlew testDebugUnitTest` passed after moving helpers into `YearProgressWidgetDrawing.kt`.
+
+Validation update (2026-01-11 21:45JST): `./gradlew testDebugUnitTest` passed after adding dot position tests.
 
 ## Idempotence and Recovery
 
@@ -473,5 +500,11 @@ Plan Change Note (2026-01-11 21:38JST): Moved bitmap sizing helpers into `YearPr
 Plan Change Note (2026-01-11 21:38JST): Ran Spotless after moving bitmap helpers.
 
 Plan Change Note (2026-01-11 21:39JST): Recorded the widget bitmap helper commit and pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:45JST): Added dot position helper extraction and tests for widget drawing math.
+
+Plan Change Note (2026-01-11 21:45JST): Ran Spotless after adding dot position tests.
+
+Plan Change Note (2026-01-11 21:46JST): Recorded the dot position math commit and pre-commit stash behavior.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
