@@ -9,22 +9,24 @@ class WidgetRefreshReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent,
     ) {
-        val reason =
-            when (intent.action) {
-                Intent.ACTION_DATE_CHANGED,
-                Intent.ACTION_TIME_CHANGED,
-                Intent.ACTION_TIMEZONE_CHANGED,
-                -> RefreshReason.TimeChanged
-
-                Intent.ACTION_BOOT_COMPLETED -> RefreshReason.Boot
-
-                Intent.ACTION_MY_PACKAGE_REPLACED -> RefreshReason.PackageReplaced
-
-                else -> null
-            }
+        val reason = resolveRefreshReason(intent.action)
 
         if (reason != null) {
             WidgetRefreshCoordinatorProvider.from(context).requestRefresh(reason)
         }
     }
 }
+
+internal fun resolveRefreshReason(action: String?): RefreshReason? =
+    when (action) {
+        Intent.ACTION_DATE_CHANGED,
+        Intent.ACTION_TIME_CHANGED,
+        Intent.ACTION_TIMEZONE_CHANGED,
+        -> RefreshReason.TimeChanged
+
+        Intent.ACTION_BOOT_COMPLETED -> RefreshReason.Boot
+
+        Intent.ACTION_MY_PACKAGE_REPLACED -> RefreshReason.PackageReplaced
+
+        else -> null
+    }

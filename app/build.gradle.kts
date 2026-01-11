@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.detekt)
+    id("jacoco")
 }
 
 android {
@@ -52,6 +53,10 @@ detekt {
     config.setFrom(files("$rootDir/detekt.yml"))
 }
 
+jacoco {
+    toolVersion = "0.8.11"
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -67,4 +72,59 @@ dependencies {
     testImplementation(libs.truth)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+val jacocoExclusions =
+    listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+    )
+
+val debugKotlinClasses =
+    fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
+        exclude(jacocoExclusions)
+    }
+val debugJavaClasses =
+    fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes")) {
+        exclude(jacocoExclusions)
+    }
+val jacocoSourceDirectories = files("src/main/java", "src/main/kotlin")
+val jacocoExecutionData =
+    fileTree(layout.buildDirectory) {
+        include(
+            "jacoco/testDebugUnitTest.exec",
+            "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+        )
+    }
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    classDirectories.setFrom(debugKotlinClasses, debugJavaClasses)
+    sourceDirectories.setFrom(jacocoSourceDirectories)
+    executionData.setFrom(jacocoExecutionData)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn("testDebugUnitTest")
+    classDirectories.setFrom(debugKotlinClasses, debugJavaClasses)
+    sourceDirectories.setFrom(jacocoSourceDirectories)
+    executionData.setFrom(jacocoExecutionData)
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.37".toBigDecimal()
+            }
+        }
+    }
 }

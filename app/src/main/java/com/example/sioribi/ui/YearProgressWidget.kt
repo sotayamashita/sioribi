@@ -54,9 +54,7 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.example.sioribi.R
-import kotlin.math.roundToInt
 
-private const val DEFAULT_TOTAL_DAYS = 365
 private val ACTIVE_COLOR_RES = R.color.widget_dot_active
 private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
 private val TEXT_COLOR_RES = R.color.widget_text
@@ -92,11 +90,16 @@ class YearProgressWidget : GlanceAppWidget() {
         GlanceTheme {
             val context = LocalContext.current
             val prefs = currentState<Preferences>()
-            val currentDay = prefs[KEY_CURRENT_DAY] ?: 0
-            val totalDays = prefs[KEY_TOTAL_DAYS] ?: DEFAULT_TOTAL_DAYS
-            val year = prefs[KEY_YEAR] ?: 0
-            val formatted = prefs[KEY_FORMATTED] ?: "0/0"
-            val shouldTriggerRefresh = year == 0 && formatted == "0/0"
+            val values =
+                normalizeWidgetValues(
+                    WidgetRawValues(
+                        currentDay = prefs[KEY_CURRENT_DAY],
+                        totalDays = prefs[KEY_TOTAL_DAYS],
+                        year = prefs[KEY_YEAR],
+                        formatted = prefs[KEY_FORMATTED],
+                    ),
+                )
+            val shouldRefresh = shouldTriggerRefresh(values.year, values.formatted)
             val activeColor = Color(ContextCompat.getColor(context, ACTIVE_COLOR_RES))
             val inactiveColor = Color(ContextCompat.getColor(context, INACTIVE_COLOR_RES))
             val textColorProvider =
@@ -110,10 +113,10 @@ class YearProgressWidget : GlanceAppWidget() {
 
             val localSize = LocalSize.current
             val effectiveSize = resolveEffectiveSize(localSize, widgetSize)
-            val gridLayout = buildGridLayout(totalDays, effectiveSize)
+            val gridLayout = buildGridLayout(values.totalDays, effectiveSize)
 
-            LaunchedEffect(shouldTriggerRefresh) {
-                if (shouldTriggerRefresh) {
+            LaunchedEffect(shouldRefresh) {
+                if (shouldRefresh) {
                     WidgetRefreshCoordinatorProvider
                         .from(context)
                         .requestRefresh(RefreshReason.FirstRender)
@@ -126,35 +129,22 @@ class YearProgressWidget : GlanceAppWidget() {
             widgetLayout(
                 context = context,
                 state =
-                    WidgetLayoutState(
-                        gridLayout = gridLayout,
-                        gridSize = gridSize,
-                        backgroundColorProvider = backgroundColorProvider,
-                        textColorProvider = textColorProvider,
-                        year = year,
-                        formatted = formatted,
-                        totalDays = totalDays,
-                        currentDay = currentDay,
-                        activeColor = activeColor,
-                        inactiveColor = inactiveColor,
+                    buildWidgetLayoutState(
+                        values = values,
+                        inputs =
+                            WidgetLayoutInputs(
+                                gridLayout = gridLayout,
+                                gridSize = gridSize,
+                                backgroundColorProvider = backgroundColorProvider,
+                                textColorProvider = textColorProvider,
+                                activeColor = activeColor,
+                                inactiveColor = inactiveColor,
+                            ),
                     ),
             )
         }
     }
 }
-
-private data class WidgetLayoutState(
-    val gridLayout: GridLayout,
-    val gridSize: DpSize,
-    val backgroundColorProvider: ColorProvider,
-    val textColorProvider: ColorProvider,
-    val year: Int,
-    val formatted: String,
-    val totalDays: Int,
-    val currentDay: Int,
-    val activeColor: Color,
-    val inactiveColor: Color,
-)
 
 @Composable
 private fun widgetLayout(
@@ -255,8 +245,9 @@ private data class DotBitmapSpec(
 
 private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
     val density = spec.context.resources.displayMetrics.density
-    val widthPx = (spec.gridSize.width.value * density).roundToInt().coerceAtLeast(1)
-    val heightPx = (spec.gridSize.height.value * density).roundToInt().coerceAtLeast(1)
+    val bitmapSize = computeBitmapSize(spec.gridSize, density)
+    val widthPx = bitmapSize.width
+    val heightPx = bitmapSize.height
     val bitmap = createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val activePaint =
@@ -270,28 +261,29 @@ private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
             style = Paint.Style.FILL
         }
 
-    val dotSizePx = spec.layout.dotSize.value * density
-    val hSpacingPx = spec.layout.horizontalSpacing.value * density
-    val vSpacingPx = spec.layout.verticalSpacing.value * density
+    val drawSpecs = computeDotDrawSpecs(spec.layout, density)
     val padPx = 0f
-    if (dotSizePx <= 0f) {
-        return bitmap
-    }
-
-    for (index in 1..spec.totalDays) {
-        val row = (index - 1) / spec.layout.columns
-        val col = (index - 1) % spec.layout.columns
-        val x = padPx + col * (dotSizePx + hSpacingPx)
-        val y = padPx + row * (dotSizePx + vSpacingPx)
-        val radius = dotSizePx / 2f
-        val paint = if (index <= spec.currentDay) activePaint else inactivePaint
-        canvas.drawCircle(x + radius, y + radius, radius, paint)
+    val commands =
+        computeDotDrawCommands(
+            totalDays = spec.totalDays,
+            currentDay = spec.currentDay,
+            columns = spec.layout.columns,
+            specs = drawSpecs,
+        )
+    for (command in commands) {
+        val paint = if (command.isActive) activePaint else inactivePaint
+        canvas.drawCircle(
+            padPx + command.centerX,
+            padPx + command.centerY,
+            command.radius,
+            paint,
+        )
     }
 
     return bitmap
 }
 
-private fun resolveEffectiveSize(
+internal fun resolveEffectiveSize(
     localSize: DpSize,
     widgetSize: DpSize,
 ): DpSize =
@@ -301,7 +293,7 @@ private fun resolveEffectiveSize(
         widgetSize
     }
 
-private fun buildGridLayout(
+internal fun buildGridLayout(
     totalDays: Int,
     size: DpSize,
 ): GridLayout =
@@ -317,7 +309,7 @@ private fun buildGridLayout(
         ),
     )
 
-private fun buildGridSize(
+internal fun buildGridSize(
     effectiveSize: DpSize,
     gridLayout: GridLayout,
 ): DpSize =

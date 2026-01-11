@@ -69,6 +69,28 @@ class WidgetRefreshReceiverTest {
         assertThat(enqueuer.reasons).isEmpty()
     }
 
+    @Test
+    fun nullActionDoesNotEnqueue() {
+        val receiver = WidgetRefreshReceiver()
+
+        receiver.onReceive(context, intentWithAction(null))
+
+        assertThat(enqueuer.reasons).isEmpty()
+    }
+
+    @Test
+    fun resolveRefreshReason_mapsKnownActions() {
+        assertThat(resolveRefreshReason(Intent.ACTION_DATE_CHANGED)).isEqualTo(RefreshReason.TimeChanged)
+        assertThat(resolveRefreshReason(Intent.ACTION_TIME_CHANGED)).isEqualTo(RefreshReason.TimeChanged)
+        assertThat(resolveRefreshReason(Intent.ACTION_TIMEZONE_CHANGED)).isEqualTo(RefreshReason.TimeChanged)
+        assertThat(resolveRefreshReason(Intent.ACTION_BOOT_COMPLETED)).isEqualTo(RefreshReason.Boot)
+        assertThat(resolveRefreshReason(Intent.ACTION_MY_PACKAGE_REPLACED)).isEqualTo(
+            RefreshReason.PackageReplaced,
+        )
+        assertThat(resolveRefreshReason("com.example.UNKNOWN")).isNull()
+        assertThat(resolveRefreshReason(null)).isNull()
+    }
+
     private class FakeEnqueuer : WidgetRefreshEnqueuer {
         val reasons = mutableListOf<RefreshReason>()
 
@@ -77,7 +99,7 @@ class WidgetRefreshReceiverTest {
         }
     }
 
-    private fun intentWithAction(action: String): Intent {
+    private fun intentWithAction(action: String?): Intent {
         val intent = mockk<Intent>(relaxed = true)
         every { intent.action } returns action
         return intent
