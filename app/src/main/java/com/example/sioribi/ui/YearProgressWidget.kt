@@ -272,22 +272,27 @@ private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
         }
 
     val drawSpecs = computeDotDrawSpecs(spec.layout, density)
-    val dotSizePx = drawSpecs.dotSizePx
-    val hSpacingPx = drawSpecs.horizontalSpacingPx
-    val vSpacingPx = drawSpecs.verticalSpacingPx
     val padPx = 0f
-    if (dotSizePx <= 0f) {
+    if (drawSpecs.dotSizePx <= 0f) {
         return bitmap
     }
 
-    for (index in 1..spec.totalDays) {
-        val row = (index - 1) / spec.layout.columns
-        val col = (index - 1) % spec.layout.columns
-        val x = padPx + col * (dotSizePx + hSpacingPx)
-        val y = padPx + row * (dotSizePx + vSpacingPx)
-        val radius = dotSizePx / 2f
-        val paint = if (index <= spec.currentDay) activePaint else inactivePaint
-        canvas.drawCircle(x + radius, y + radius, radius, paint)
+    val dotPositions =
+        computeDotPositions(
+            totalDays = spec.totalDays,
+            columns = spec.layout.columns,
+            specs = drawSpecs,
+        )
+    val radius = drawSpecs.dotSizePx / 2f
+    for ((index, position) in dotPositions.withIndex()) {
+        val dayIndex = index + 1
+        val paint = if (dayIndex <= spec.currentDay) activePaint else inactivePaint
+        canvas.drawCircle(
+            padPx + position.centerX,
+            padPx + position.centerY,
+            radius,
+            paint,
+        )
     }
 
     return bitmap

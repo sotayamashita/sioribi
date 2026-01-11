@@ -14,6 +14,11 @@ internal data class DotDrawSpecs(
     val verticalSpacingPx: Float,
 )
 
+internal data class DotPosition(
+    val centerX: Float,
+    val centerY: Float,
+)
+
 internal fun computeBitmapSize(
     gridSize: DpSize,
     density: Float,
@@ -32,3 +37,25 @@ internal fun computeDotDrawSpecs(
         horizontalSpacingPx = layout.horizontalSpacing.value * density,
         verticalSpacingPx = layout.verticalSpacing.value * density,
     )
+
+internal fun computeDotPositions(
+    totalDays: Int,
+    columns: Int,
+    specs: DotDrawSpecs,
+): List<DotPosition> {
+    if (totalDays <= 0 || columns <= 0 || specs.dotSizePx <= 0f) {
+        return emptyList()
+    }
+    val dotPositions = ArrayList<DotPosition>(totalDays)
+    val radius = specs.dotSizePx / 2f
+    for (index in 1..totalDays) {
+        val row = (index - 1) / columns
+        val col = (index - 1) % columns
+        val x = col * (specs.dotSizePx + specs.horizontalSpacingPx)
+        val y = row * (specs.dotSizePx + specs.verticalSpacingPx)
+        val centerX = x + radius
+        val centerY = y + radius
+        dotPositions.add(DotPosition(centerX = centerX, centerY = centerY))
+    }
+    return dotPositions
+}
