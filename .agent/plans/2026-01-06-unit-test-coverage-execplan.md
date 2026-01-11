@@ -18,6 +18,7 @@ After this change, the project will have broader unit test coverage over domain 
 - [x] (2026-01-11 20:52JST) Capture baseline coverage report and set an initial coverage verification rule.
 - [x] (2026-01-11 20:52JST) Validate tests and coverage tasks on the project.
 - [x] (2026-01-11 21:15JST) Phase 1-3 expansion: added additional data/domain tests, UI sizing edge cases, and a clock-injected scheduler helper with unit tests.
+- [x] (2026-01-11 21:20JST) Phase 3 continuation: extracted `writeModelToPreferences` from `WidgetUpdateWorker` and added unit tests.
 
 ## Surprises & Discoveries
 
@@ -35,6 +36,9 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Observation: The pre-commit hook stashed unstaged changes during the core test expansion commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768133865-31180.`
+
+- Observation: The pre-commit hook stashed unstaged changes during the widget preference writer commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768134113-35029.`
 
 ## Decision Log
 
@@ -72,6 +76,10 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Decision: Extract `computeInitialDelayMillis` in `WidgetUpdateScheduler` to accept a `Clock` and keep `scheduleDaily` behavior unchanged.
   Rationale: A clock-injected helper makes time-based logic testable in JVM unit tests without Robolectric or Hilt.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Extract `writeModelToPreferences` from `WidgetUpdateWorker` for JVM unit testing of preference updates.
+  Rationale: The preference write logic is pure Kotlin and can be tested without Android framework dependencies.
   Date/Author: 2026-01-11, Codex
 
 ## Outcomes & Retrospective
@@ -220,6 +228,19 @@ Concrete Steps update (2026-01-11 21:15JST): Added tests in data/domain/ui, intr
     ./gradlew testDebugUnitTest
     BUILD SUCCESSFUL in 2s
 
+Concrete Steps update (2026-01-11 21:20JST): Extracted `writeModelToPreferences` and added `WidgetUpdateWorkerTest`, then reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt
+      - app/src/test/java/com/example/sioribi/ui/WidgetUpdateWorkerTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    git commit -m "refactor(ui): extract widget preference writer"
+    [feat/unit-test-coverage 23f4497] refactor(ui): extract widget preference writer
+
 ## Validation and Acceptance
 
 - Running `./gradlew testDebugUnitTest` succeeds with all unit tests passing.
@@ -234,6 +255,8 @@ Validation update (2026-01-11 20:52JST): Not executed yet for the JaCoCo tasks; 
 Validation update (2026-01-11 20:52JST): `./gradlew testDebugUnitTest` passed, `./gradlew testDebugUnitTest jacocoTestReport` generated reports, and `./gradlew jacocoTestCoverageVerification` passed with a 0.33 line coverage minimum. HTML report confirmed at `app/build/reports/jacoco/jacocoTestReport/html/index.html`.
 
 Validation update (2026-01-11 21:15JST): Re-ran `./gradlew testDebugUnitTest` after each added test batch; all runs passed.
+
+Validation update (2026-01-11 21:20JST): `./gradlew testDebugUnitTest` passed after extracting `writeModelToPreferences` and adding `WidgetUpdateWorkerTest`.
 
 ## Idempotence and Recovery
 
@@ -279,5 +302,9 @@ Plan Change Note (2026-01-11 21:16JST): Ran Spotless to ensure formatting after 
 Plan Change Note (2026-01-11 21:17JST): Recorded the scheduler helper commit and noted the pre-commit stash behavior.
 
 Plan Change Note (2026-01-11 21:17JST): Recorded the core unit test expansion commit and noted the pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:20JST): Recorded the `WidgetUpdateWorker` helper extraction, new test addition, and validation run.
+
+Plan Change Note (2026-01-11 21:22JST): Recorded the widget preference writer commit and pre-commit stash behavior.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
