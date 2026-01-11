@@ -8,6 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import java.time.Clock
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
@@ -17,9 +18,7 @@ object WidgetUpdateScheduler {
     private const val UPDATE_INTERVAL_HOURS = 24L
 
     fun scheduleDaily(context: Context) {
-        val now = ZonedDateTime.now()
-        val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.zone)
-        val delay = Duration.between(now, nextMidnight).toMillis().coerceAtLeast(0)
+        val delay = computeInitialDelayMillis(Clock.systemDefaultZone())
 
         val request =
             PeriodicWorkRequestBuilder<WidgetUpdateWorker>(UPDATE_INTERVAL_HOURS, TimeUnit.HOURS)
@@ -33,6 +32,12 @@ object WidgetUpdateScheduler {
             request,
         )
     }
+}
+
+internal fun computeInitialDelayMillis(clock: Clock): Long {
+    val now = ZonedDateTime.now(clock)
+    val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.zone)
+    return Duration.between(now, nextMidnight).toMillis().coerceAtLeast(0)
 }
 
 class ManualRefreshAction : ActionCallback {
