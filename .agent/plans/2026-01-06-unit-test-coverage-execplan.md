@@ -150,6 +150,9 @@ Concrete Steps update (2026-01-11 20:52JST): Ran unit tests, generated the JaCoC
     > Task :app:spotlessApply
     BUILD SUCCESSFUL in 1s
 
+    git commit -m "feat(test): add jacoco coverage and unit test expansions"
+    [feat/unit-test-coverage 85ecd29] feat(test): add jacoco coverage and unit test expansions
+
 ## Validation and Acceptance
 
 - Running `./gradlew testDebugUnitTest` succeeds with all unit tests passing.
@@ -191,5 +194,7 @@ Plan Change Note (2026-01-11 20:52JST): Recorded added unit tests, baseline cove
 Plan Change Note (2026-01-11 20:52JST): Updated JaCoCo task inputs to use `layout.buildDirectory`, captured the warning disappearance, and recorded the decision.
 
 Plan Change Note (2026-01-11 20:52JST): Recorded the Spotless formatting fix required by the git hook and the resulting `spotlessApply` run.
+
+Plan Change Note (2026-01-11 20:52JST): Added the git commit entry to Concrete Steps after the successful hook run.
 
 Issue Tracking Note: This plan is tracked in https://github.com/sotayamashita/sioribi/issues/2.
