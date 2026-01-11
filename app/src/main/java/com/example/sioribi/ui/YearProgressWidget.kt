@@ -291,7 +291,7 @@ private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
     return bitmap
 }
 
-private fun resolveEffectiveSize(
+internal fun resolveEffectiveSize(
     localSize: DpSize,
     widgetSize: DpSize,
 ): DpSize =
@@ -301,7 +301,7 @@ private fun resolveEffectiveSize(
         widgetSize
     }
 
-private fun buildGridLayout(
+internal fun buildGridLayout(
     totalDays: Int,
     size: DpSize,
 ): GridLayout =
@@ -317,7 +317,7 @@ private fun buildGridLayout(
         ),
     )
 
-private fun buildGridSize(
+internal fun buildGridSize(
     effectiveSize: DpSize,
     gridLayout: GridLayout,
 ): DpSize =
