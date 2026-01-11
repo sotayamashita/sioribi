@@ -20,6 +20,7 @@ After this change, the project will have broader unit test coverage over domain 
 - [x] (2026-01-11 21:15JST) Phase 1-3 expansion: added additional data/domain tests, UI sizing edge cases, and a clock-injected scheduler helper with unit tests.
 - [x] (2026-01-11 21:20JST) Phase 3 continuation: extracted `writeModelToPreferences` from `WidgetUpdateWorker` and added unit tests.
 - [x] (2026-01-11 21:25JST) UI/DI coverage: extracted `resolveRefreshReason` helper and added receiver tests for null/unknown actions.
+- [x] (2026-01-11 21:37JST) UI drawing logic: extracted bitmap sizing helpers from `YearProgressWidget` and added unit tests.
 
 ## Surprises & Discoveries
 
@@ -52,6 +53,12 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Observation: The pre-commit hook stashed unstaged changes during the widget sizing helper commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768134575-42303.`
+
+- Observation: The detekt hook failed due to `YearProgressWidget.kt` exceeding the `TooManyFunctions` threshold after adding helpers.
+  Evidence: `YearProgressWidget.kt ... TooManyFunctions`.
+
+- Observation: The pre-commit hook stashed unstaged changes during the widget bitmap helper commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768135158-46179.`
 
 ## Decision Log
 
@@ -105,6 +112,14 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Decision: Expose `resolveEffectiveSize`, `buildGridLayout`, and `buildGridSize` as internal helpers for JVM tests.
   Rationale: These helpers are pure Kotlin sizing logic and can be tested without Android dependencies.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Extract `computeBitmapSize` and `computeDotDrawSpecs` for deterministic bitmap sizing tests.
+  Rationale: These computations are pure Kotlin and isolate the drawing math from Android rendering.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Move bitmap sizing helpers into `YearProgressWidgetDrawing.kt` to keep `YearProgressWidget.kt` below detekt's `TooManyFunctions` threshold.
+  Rationale: Splitting the file avoids suppressing detekt and keeps widget rendering code readable.
   Date/Author: 2026-01-11, Codex
 
 ## Outcomes & Retrospective
@@ -322,6 +337,35 @@ Concrete Steps update (2026-01-11 21:28JST): Exposed widget sizing helpers, adde
     ./gradlew spotlessApply
     BUILD SUCCESSFUL in 1s
 
+Concrete Steps update (2026-01-11 21:37JST): Extracted bitmap sizing helpers, added bitmap math tests, and reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/test/java/com/example/sioribi/ui/YearProgressWidgetBitmapTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 3s
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 2s
+
+Concrete Steps update (2026-01-11 21:38JST): Moved bitmap helpers into `YearProgressWidgetDrawing.kt` after detekt failure and reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidgetDrawing.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 3s
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    git commit -m "refactor(ui): extract widget bitmap helpers"
+    [feat/unit-test-coverage 2b1c56c] refactor(ui): extract widget bitmap helpers
+
     git commit -m "test(ui): add widget sizing helpers coverage"
     [feat/unit-test-coverage 9360dfc] test(ui): add widget sizing helpers coverage
 
@@ -350,6 +394,10 @@ Validation update (2026-01-11 21:23JST): `./gradlew testDebugUnitTest jacocoTest
 Validation update (2026-01-11 21:25JST): `./gradlew testDebugUnitTest` passed after adding `resolveRefreshReason` and receiver tests.
 
 Validation update (2026-01-11 21:28JST): `./gradlew testDebugUnitTest` passed after correcting the sizing test expectation.
+
+Validation update (2026-01-11 21:37JST): `./gradlew testDebugUnitTest` passed after adding bitmap sizing helper tests.
+
+Validation update (2026-01-11 21:38JST): `./gradlew testDebugUnitTest` passed after moving helpers into `YearProgressWidgetDrawing.kt`.
 
 ## Idempotence and Recovery
 
@@ -415,5 +463,15 @@ Plan Change Note (2026-01-11 21:28JST): Added widget sizing helper exposure and 
 Plan Change Note (2026-01-11 21:29JST): Ran Spotless after adding widget sizing tests.
 
 Plan Change Note (2026-01-11 21:29JST): Recorded the widget sizing helper commit and pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:37JST): Added bitmap sizing helpers and tests for `YearProgressWidget` drawing logic.
+
+Plan Change Note (2026-01-11 21:37JST): Ran Spotless after adding bitmap sizing tests.
+
+Plan Change Note (2026-01-11 21:38JST): Moved bitmap sizing helpers into `YearProgressWidgetDrawing.kt` to resolve detekt `TooManyFunctions`.
+
+Plan Change Note (2026-01-11 21:38JST): Ran Spotless after moving bitmap helpers.
+
+Plan Change Note (2026-01-11 21:39JST): Recorded the widget bitmap helper commit and pre-commit stash behavior.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
