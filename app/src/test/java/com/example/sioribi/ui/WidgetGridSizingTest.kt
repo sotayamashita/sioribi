@@ -58,6 +58,39 @@ class WidgetGridSizingTest {
     }
 
     @Test
+    fun computeGridLayout_usesFallbackWhenSizeIsZero() {
+        val layout =
+            computeGridLayout(
+                configForSize(
+                    size = DpSize(0.dp, 0.dp),
+                    minColumns = 0,
+                ),
+            )
+
+        assertThat(layout.columns).isEqualTo(1)
+        assertThat(layout.rows).isAtLeast(1)
+        assertThat(layout.dotSize).isEqualTo(1.dp)
+        assertThat(layout.horizontalSpacing).isEqualTo(0.dp)
+        assertThat(layout.verticalSpacing).isEqualTo(0.dp)
+        assertThat(layout.padding).isEqualTo(0.dp)
+    }
+
+    @Test
+    fun computeGridLayout_usesFallbackWhenSizeIsNegative() {
+        val layout =
+            computeGridLayout(
+                configForSize(
+                    size = DpSize((-10).dp, (-5).dp),
+                    minColumns = 0,
+                ),
+            )
+
+        assertThat(layout.columns).isEqualTo(1)
+        assertThat(layout.rows).isAtLeast(1)
+        assertThat(layout.dotSize).isEqualTo(1.dp)
+    }
+
+    @Test
     fun pickLargestSize_prefersMaxArea() {
         val sizes =
             listOf(
@@ -80,17 +113,43 @@ class WidgetGridSizingTest {
         assertThat(resolved).isEqualTo(fallback)
     }
 
+    @Test
+    fun pickLargestSize_returnsFallbackWhenNull() {
+        val fallback = DpSize(42.dp, 24.dp)
+
+        val resolved = pickLargestSize(null, fallback)
+
+        assertThat(resolved).isEqualTo(fallback)
+    }
+
+    @Test
+    fun pickLargestSize_ignoresInvalidSizes() {
+        val fallback = DpSize(42.dp, 24.dp)
+        val sizes =
+            listOf(
+                DpSize(0.dp, 240.dp),
+                DpSize((-10).dp, 240.dp),
+                DpSize(240.dp, 0.dp),
+            )
+
+        val resolved = pickLargestSize(sizes, fallback)
+
+        assertThat(resolved).isEqualTo(fallback)
+    }
+
     private fun configForSize(
         size: DpSize,
+        totalDays: Int = TOTAL_DAYS,
         spacingRatio: Float = DEFAULT_SPACING_RATIO,
         paddingRatio: Float = DEFAULT_PADDING_RATIO,
+        minColumns: Int = MIN_COLUMNS,
     ): GridLayoutConfig =
         GridLayoutConfig(
-            totalDays = TOTAL_DAYS,
+            totalDays = totalDays,
             size = size,
             footerHeight = FOOTER_HEIGHT,
             footerSpacing = FOOTER_SPACING,
-            minColumns = MIN_COLUMNS,
+            minColumns = minColumns,
             spacingRatio = spacingRatio,
             paddingRatio = paddingRatio,
         )

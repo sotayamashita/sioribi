@@ -17,4 +17,18 @@ class SystemTimeDataSourceTest {
 
         assertThat(result).isEqualTo(LocalDate.of(2026, 3, 14))
     }
+
+    @Test
+    fun `today reflects clock zone offset`() {
+        val fixedClock =
+            Clock.fixed(
+                Instant.parse("2026-03-14T23:30:00Z"),
+                ZoneId.of("+02:00"),
+            )
+        val dataSource = SystemTimeDataSource(fixedClock)
+
+        val result = dataSource.today()
+
+        assertThat(result).isEqualTo(LocalDate.of(2026, 3, 15))
+    }
 }

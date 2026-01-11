@@ -35,6 +35,32 @@ class GetYearProgressUseCaseTest {
     }
 
     @Test
+    fun `leap year first day uses leap year total`() {
+        // Technique: Boundary Value Analysis (start of leap year).
+        val useCase = GetYearProgressUseCase(FakeTimeDataSource(LocalDate.of(2024, 1, 1)))
+
+        val result = useCase.execute()
+
+        assertThat(result.totalDays).isEqualTo(366)
+        assertThat(result.currentDay).isEqualTo(1)
+        assertThat(result.progressPercentage).isEqualTo(0)
+        assertThat(result.formattedString).isEqualTo("1/366")
+    }
+
+    @Test
+    fun `day before leap day rounds consistently`() {
+        // Technique: Boundary Value Analysis (day before leap day).
+        val useCase = GetYearProgressUseCase(FakeTimeDataSource(LocalDate.of(2024, 2, 28)))
+
+        val result = useCase.execute()
+
+        assertThat(result.totalDays).isEqualTo(366)
+        assertThat(result.currentDay).isEqualTo(59)
+        assertThat(result.progressPercentage).isEqualTo(16)
+        assertThat(result.formattedString).isEqualTo("59/366")
+    }
+
+    @Test
     fun `first day of year rounds down percentage`() {
         // Technique: Boundary Value Analysis (start of year).
         val useCase = GetYearProgressUseCase(FakeTimeDataSource(LocalDate.of(2026, 1, 1)))
