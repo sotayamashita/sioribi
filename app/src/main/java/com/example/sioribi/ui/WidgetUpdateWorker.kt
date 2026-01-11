@@ -32,7 +32,7 @@ class WidgetUpdateWorker(
         val reason = inputData.getString(KEY_REFRESH_REASON) ?: "Unknown"
         Log.d(
             "WidgetUpdateWorker",
-            "Updated widget for ${model.year}: ${model.formattedString} reason=$reason",
+            buildWidgetUpdateLogMessage(model, reason),
         )
         return Result.success()
     }
@@ -47,3 +47,8 @@ internal fun writeModelToPreferences(
     preferences[YearProgressWidget.KEY_YEAR] = model.year
     preferences[YearProgressWidget.KEY_FORMATTED] = model.formattedString
 }
+
+internal fun buildWidgetUpdateLogMessage(
+    model: YearProgressModel,
+    reason: String,
+): String = "Updated widget for ${model.year}: ${model.formattedString} reason=$reason"

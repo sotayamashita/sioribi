@@ -19,6 +19,13 @@ internal data class DotPosition(
     val centerY: Float,
 )
 
+internal data class DotDrawCommand(
+    val centerX: Float,
+    val centerY: Float,
+    val radius: Float,
+    val isActive: Boolean,
+)
+
 internal fun computeBitmapSize(
     gridSize: DpSize,
     density: Float,
@@ -58,4 +65,31 @@ internal fun computeDotPositions(
         dotPositions.add(DotPosition(centerX = centerX, centerY = centerY))
     }
     return dotPositions
+}
+
+internal fun computeDotDrawCommands(
+    totalDays: Int,
+    currentDay: Int,
+    columns: Int,
+    specs: DotDrawSpecs,
+): List<DotDrawCommand> {
+    if (totalDays <= 0 || columns <= 0 || specs.dotSizePx <= 0f) {
+        return emptyList()
+    }
+    val safeCurrentDay = currentDay.coerceIn(0, totalDays)
+    val radius = specs.dotSizePx / 2f
+    val positions = computeDotPositions(totalDays = totalDays, columns = columns, specs = specs)
+    val commands = ArrayList<DotDrawCommand>(positions.size)
+    for ((index, position) in positions.withIndex()) {
+        val dayIndex = index + 1
+        commands.add(
+            DotDrawCommand(
+                centerX = position.centerX,
+                centerY = position.centerY,
+                radius = radius,
+                isActive = dayIndex <= safeCurrentDay,
+            ),
+        )
+    }
+    return commands
 }

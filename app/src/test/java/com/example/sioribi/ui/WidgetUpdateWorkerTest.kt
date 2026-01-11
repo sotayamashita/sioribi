@@ -25,4 +25,20 @@ class WidgetUpdateWorkerTest {
         assertThat(preferences[YearProgressWidget.KEY_YEAR]).isEqualTo(2026)
         assertThat(preferences[YearProgressWidget.KEY_FORMATTED]).isEqualTo("10/365")
     }
+
+    @Test
+    fun `buildWidgetUpdateLogMessage formats model and reason`() {
+        val model =
+            YearProgressModel(
+                currentDay = 1,
+                totalDays = 365,
+                year = 2026,
+                progressPercentage = 1,
+                formattedString = "1/365",
+            )
+
+        val message = buildWidgetUpdateLogMessage(model, "Manual")
+
+        assertThat(message).isEqualTo("Updated widget for 2026: 1/365 reason=Manual")
+    }
 }

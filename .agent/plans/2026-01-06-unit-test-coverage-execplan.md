@@ -22,6 +22,8 @@ After this change, the project will have broader unit test coverage over domain 
 - [x] (2026-01-11 21:25JST) UI/DI coverage: extracted `resolveRefreshReason` helper and added receiver tests for null/unknown actions.
 - [x] (2026-01-11 21:37JST) UI drawing logic: extracted bitmap sizing helpers from `YearProgressWidget` and added unit tests.
 - [x] (2026-01-11 21:45JST) UI drawing logic: extracted dot position calculation and added unit tests.
+- [x] (2026-01-11 22:05JST) Phase 4: generated dot draw commands in pure Kotlin, updated widget drawing, and added unit tests.
+- [x] (2026-01-11 22:40JST) Phase 4 follow-up: extracted widget state/refresh helpers and worker log message helpers, added JVM tests.
 
 ## Surprises & Discoveries
 
@@ -63,6 +65,9 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Observation: The pre-commit hook stashed unstaged changes during the dot position math commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768135564-48957.`
+
+- Observation: Detekt flagged `LongParameterList` for widget state helpers after extraction.
+  Evidence: `YearProgressWidgetState.kt: normalizeWidgetValues ... buildWidgetLayoutState ... LongParameterList`.
 
 ## Decision Log
 
@@ -130,6 +135,14 @@ After this change, the project will have broader unit test coverage over domain 
   Rationale: Coordinates are pure math and can be validated without rendering.
   Date/Author: 2026-01-11, Codex
 
+- Decision: Plan to generate `DotDrawCommand` entries in pure Kotlin and keep Canvas drawing as a thin adapter.
+  Rationale: This maximizes testable drawing logic while leaving Android rendering minimal.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Bundle widget state helper inputs into data classes to satisfy detekt `LongParameterList`.
+  Rationale: Grouping related inputs keeps helpers pure while complying with lint thresholds.
+  Date/Author: 2026-01-11, Codex
+
 ## Outcomes & Retrospective
 
 Milestone complete (2026-01-11 20:52JST): Added JVM tests around domain/data logic, JaCoCo report + verification tasks, and CI artifact upload. Coverage verification now enforces a 0.33 line ratio baseline while leaving room for future improvements.
@@ -165,6 +178,8 @@ Phase 1 (data/domain, highest priority): add unit tests for `SystemTimeDataSourc
 Phase 2 (UI pure logic): expand `WidgetGridSizing.kt` tests for edge cases where widget sizes are zero or negative, and validate fallbacks (minimum columns/rows, dot size floor). Add tests for `pickLargestSize` when `sizes` is null or contains invalid entries, ensuring fallback is returned. These tests remain JVM-only and avoid Android framework types beyond `Dp`/`DpSize`.
 
 Phase 3 (light refactor to enable tests): refactor `WidgetUpdateScheduler` by extracting delay calculation into a pure Kotlin helper that accepts a `Clock` and zone (or derives zone from the clock) and returns the initial delay in milliseconds. Add unit tests for that helper to cover midnight boundary cases (just before midnight, exactly at midnight) and verify the delay is clamped to non-negative values. If coverage gaps remain in `WidgetUpdateWorker` and the logic is still Android-bound, extract the preference-write logic into a pure function and unit-test it separately; avoid instrumented tests unless unavoidable.
+
+Phase 4 (UI drawing pure Kotlin): extend the drawing refactor to generate `DotDrawCommand` entries in a pure Kotlin helper. Introduce a `DotDrawCommand` data class and a `computeDotDrawCommands(...)` helper in `app/src/main/java/com/example/sioribi/ui/YearProgressWidgetDrawing.kt` that produces a list of commands based on `totalDays`, `currentDay`, `columns`, and `DotDrawSpecs`. The helper must clamp `currentDay` into the range `[0, totalDays]` and return an empty list when `totalDays <= 0`, `columns <= 0`, or `dotSizePx <= 0f`. Update `YearProgressWidget` to render by iterating `DotDrawCommand` entries and selecting the paint via `isActive`. Add JVM unit tests covering edge cases (currentDay 0/1/totalDays/exceeds totalDays, invalid inputs) and coordinate expectations for the first few commands.
 
 ## Concrete Steps
 
@@ -397,6 +412,53 @@ Concrete Steps update (2026-01-11 21:45JST): Extracted dot position math, added 
     git commit -m "refactor(ui): extract widget preference writer"
     [feat/unit-test-coverage 23f4497] refactor(ui): extract widget preference writer
 
+Concrete Steps update (2026-01-11 22:05JST): Added dot draw command generation, updated widget drawing to use commands, added tests, and reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidgetDrawing.kt
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/test/java/com/example/sioribi/ui/YearProgressWidgetDotPositionsTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 3s
+
+Concrete Steps update (2026-01-11 22:40JST): Extracted widget state/refresh helpers, added JVM tests, added worker log message helper test, and reran unit tests after each addition.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidgetState.kt
+      - app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt
+      - app/src/test/java/com/example/sioribi/ui/YearProgressWidgetStateTest.kt
+      - app/src/test/java/com/example/sioribi/ui/WidgetUpdateWorkerTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 4s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+Concrete Steps update (2026-01-11 22:50JST): Ran Spotless and Detekt, addressed detekt LongParameterList findings, and re-ran Spotless/Detekt.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidgetState.kt
+      - app/src/test/java/com/example/sioribi/ui/YearProgressWidgetStateTest.kt
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    ./gradlew detekt
+    BUILD FAILED in 396ms
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    ./gradlew detekt
+    BUILD SUCCESSFUL in 393ms
+
 ## Validation and Acceptance
 
 - Running `./gradlew testDebugUnitTest` succeeds with all unit tests passing.
@@ -425,6 +487,12 @@ Validation update (2026-01-11 21:37JST): `./gradlew testDebugUnitTest` passed af
 Validation update (2026-01-11 21:38JST): `./gradlew testDebugUnitTest` passed after moving helpers into `YearProgressWidgetDrawing.kt`.
 
 Validation update (2026-01-11 21:45JST): `./gradlew testDebugUnitTest` passed after adding dot position tests.
+
+Validation update (2026-01-11 22:05JST): `./gradlew testDebugUnitTest` passed after adding dot draw command tests.
+
+Validation update (2026-01-11 22:40JST): `./gradlew testDebugUnitTest` passed after adding widget state helpers/tests and again after adding the worker log message helper test.
+
+Validation update (2026-01-11 22:50JST): `./gradlew detekt` failed once on LongParameterList, then passed after regrouping widget helper inputs and rerunning Spotless + Detekt.
 
 ## Idempotence and Recovery
 
@@ -506,5 +574,49 @@ Plan Change Note (2026-01-11 21:45JST): Added dot position helper extraction and
 Plan Change Note (2026-01-11 21:45JST): Ran Spotless after adding dot position tests.
 
 Plan Change Note (2026-01-11 21:46JST): Recorded the dot position math commit and pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:49JST): Added Phase 4 plan for `DotDrawCommand` generation with JVM unit tests.
+
+Plan Change Note (2026-01-11 22:05JST): Completed Phase 4 dot draw command generation and updated the widget drawing/tests.
+
+Plan Change Note (2026-01-11 22:15JST): Added explicit JVM vs Android API boundary guidance for future refactors.
+
+Plan Change Note (2026-01-11 22:30JST): Started Phase 4 follow-up to extract widget state/refresh helpers and worker log message helpers for JVM tests.
+
+Plan Change Note (2026-01-11 22:40JST): Completed Phase 4 follow-up with widget state/refresh helpers, normalized preference values, and worker log message helper plus JVM tests.
+
+### JVM vs Android API Boundary Guidance (for refactors)
+
+Use this checklist to decide what to keep as pure Kotlin (JVM-testable) versus Android API bound:
+
+- **Keep on JVM (pure Kotlin helpers):**
+  - Calculations, transformations, and formatting.
+  - Date/time math and scheduling calculations (inject `Clock`).
+  - Layout sizing math (grid/spacing/padding calculations).
+  - Draw command generation and coordinate math (e.g., `DotDrawCommand` generation).
+  - State derivation from stored values (e.g., preferences/model -> UI state).
+
+- **Keep on Android API side (thin adapters):**
+  - Rendering and drawing (`Canvas`, `Bitmap`, `Glance` composables).
+  - Context/resource access (`Context`, `Resources`, `Color` from resources).
+  - IO/work orchestration (`WorkManager`, `BroadcastReceiver`, `AppWidgetManager`).
+  - Lifecycle/OS events (`Intent`, `BroadcastReceiver`, widget option callbacks).
+
+Practical heuristic: if the code compiles without `android.*` imports, it should live in a pure Kotlin helper and be JVM-tested. If it requires Android framework types, keep it as a minimal adapter and push the logic into helpers where possible.
+
+### Next Tasks (JVM extraction opportunities)
+
+Identify remaining logic that can be pushed into pure Kotlin helpers to increase JVM test coverage:
+
+- **YearProgressWidget.kt**
+  - Extract a helper that derives `WidgetLayoutState` from primitive inputs (currentDay/totalDays/year/formatted), pre-resolved colors, and sizing results. Keep resource lookups and Glance composition in Android code.
+  - Extract a pure helper for `shouldTriggerRefresh` (e.g., `shouldTriggerRefresh(year: Int, formatted: String): Boolean`) and cover it with unit tests.
+  - Extract a helper that normalizes widget values (defaults, clamps) from raw preference values before building layout state.
+
+- **WidgetUpdateWorker.kt**
+  - Extract a pure helper that formats the log message (year/formatted/reason) to allow deterministic string assertions in JVM tests.
+
+- **WidgetRefreshCoordinator.kt**
+  - Keep `WorkManager` enqueuing in Android code, but extract any future reason/metadata mapping into helpers if it grows.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
