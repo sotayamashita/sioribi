@@ -1,11 +1,11 @@
-# 栞日
+# Sioribi
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sotayamashita/sioribi) [![CI](https://github.com/sotayamashita/sioribi/actions/workflows/ci.yml/badge.svg)](https://github.com/sotayamashita/sioribi/actions/workflows/ci.yml)
 
-## 開発とテスト
+## Development and Testing
 
-- ユニットテスト: `./gradlew testDebugUnitTest`
-- カバレッジレポート生成: `./gradlew testDebugUnitTest jacocoTestReport`
-- カバレッジ検証: `./gradlew jacocoTestCoverageVerification`
+- Unit tests: `./gradlew testDebugUnitTest`
+- Generate coverage report: `./gradlew testDebugUnitTest jacocoTestReport`
+- Coverage verification: `./gradlew jacocoTestCoverageVerification`
 
-カバレッジHTMLは `app/build/reports/jacoco/jacocoTestReport/html/index.html` に出力されます。
+The coverage HTML report is written to `app/build/reports/jacoco/jacocoTestReport/html/index.html`.

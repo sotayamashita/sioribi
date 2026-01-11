@@ -11,7 +11,8 @@ After this change, the project will have broader unit test coverage over domain 
 ## Progress
 
 - [x] (2026-01-06 00:00Z) Created initial ExecPlan document with scoped tasks and validation steps.
-- [x] (2026-01-11 20:47JST) 開始: ExecPlanを精読し、最初のマイルストン着手の準備を完了。
+- [x] (2026-01-11 20:47JST) Start: Read the ExecPlan end-to-end and prepared to begin the first milestone.
+- [x] (2026-01-11 20:56JST) Translate README and this ExecPlan entry to English to meet repo language requirements.
 - [x] (2026-01-11 20:52JST) Add JaCoCo configuration and report/verification tasks for local unit tests in `app/build.gradle.kts`.
 - [x] (2026-01-11 20:52JST) Expand unit tests in `app/src/test/java/com/example/sioribi/` for domain/data logic and edge cases.
 - [x] (2026-01-11 20:52JST) Capture baseline coverage report and set an initial coverage verification rule.
@@ -196,5 +197,7 @@ Plan Change Note (2026-01-11 20:52JST): Updated JaCoCo task inputs to use `layou
 Plan Change Note (2026-01-11 20:52JST): Recorded the Spotless formatting fix required by the git hook and the resulting `spotlessApply` run.
 
 Plan Change Note (2026-01-11 20:52JST): Added the git commit entry to Concrete Steps after the successful hook run.
+
+Plan Change Note (2026-01-11 20:56JST): Translated README.md and this ExecPlan entry to English per language requirements.
 
 Issue Tracking Note: This plan is tracked in https://github.com/sotayamashita/sioribi/issues/2.
