@@ -255,8 +255,9 @@ private data class DotBitmapSpec(
 
 private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
     val density = spec.context.resources.displayMetrics.density
-    val widthPx = (spec.gridSize.width.value * density).roundToInt().coerceAtLeast(1)
-    val heightPx = (spec.gridSize.height.value * density).roundToInt().coerceAtLeast(1)
+    val bitmapSize = computeBitmapSize(spec.gridSize, density)
+    val widthPx = bitmapSize.width
+    val heightPx = bitmapSize.height
     val bitmap = createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val activePaint =
@@ -270,9 +271,10 @@ private fun buildDotBitmap(spec: DotBitmapSpec): Bitmap {
             style = Paint.Style.FILL
         }
 
-    val dotSizePx = spec.layout.dotSize.value * density
-    val hSpacingPx = spec.layout.horizontalSpacing.value * density
-    val vSpacingPx = spec.layout.verticalSpacing.value * density
+    val drawSpecs = computeDotDrawSpecs(spec.layout, density)
+    val dotSizePx = drawSpecs.dotSizePx
+    val hSpacingPx = drawSpecs.horizontalSpacingPx
+    val vSpacingPx = drawSpecs.verticalSpacingPx
     val padPx = 0f
     if (dotSizePx <= 0f) {
         return bitmap
