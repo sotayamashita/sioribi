@@ -47,6 +47,12 @@ After this change, the project will have broader unit test coverage over domain 
 - Observation: The pre-commit hook stashed unstaged changes during the refresh reason mapping commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768134381-39333.`
 
+- Observation: The initial `buildGridSize` expectation was incorrect and caused a unit test failure.
+  Evidence: `YearProgressWidgetSizingTest > buildGridSize accounts for padding and footer FAILED`.
+
+- Observation: The pre-commit hook stashed unstaged changes during the widget sizing helper commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768134575-42303.`
+
 ## Decision Log
 
 - Decision: Focus test expansion on local JVM unit tests for domain and data logic, and avoid new instrumented tests unless Android framework behavior is unavoidable.
@@ -95,6 +101,10 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Decision: Extract `resolveRefreshReason` from `WidgetRefreshReceiver` for pure Kotlin tests of intent-to-reason mapping.
   Rationale: The mapping logic is deterministic and increases UI/DI coverage without Android framework dependencies.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Expose `resolveEffectiveSize`, `buildGridLayout`, and `buildGridSize` as internal helpers for JVM tests.
+  Rationale: These helpers are pure Kotlin sizing logic and can be tested without Android dependencies.
   Date/Author: 2026-01-11, Codex
 
 ## Outcomes & Retrospective
@@ -296,6 +306,25 @@ Concrete Steps update (2026-01-11 21:25JST): Extracted `resolveRefreshReason`, e
     git commit -m "test(ui): cover refresh reason mapping"
     [feat/unit-test-coverage 38b57e6] test(ui): cover refresh reason mapping
 
+Concrete Steps update (2026-01-11 21:28JST): Exposed widget sizing helpers, added sizing tests, fixed expectation, and reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt
+      - app/src/test/java/com/example/sioribi/ui/YearProgressWidgetSizingTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD FAILED in 3s
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 2s
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    git commit -m "test(ui): add widget sizing helpers coverage"
+    [feat/unit-test-coverage 9360dfc] test(ui): add widget sizing helpers coverage
+
     git commit -m "refactor(ui): extract widget preference writer"
     [feat/unit-test-coverage 23f4497] refactor(ui): extract widget preference writer
 
@@ -319,6 +348,8 @@ Validation update (2026-01-11 21:20JST): `./gradlew testDebugUnitTest` passed af
 Validation update (2026-01-11 21:23JST): `./gradlew testDebugUnitTest jacocoTestReport` produced updated reports and `./gradlew jacocoTestCoverageVerification` passed with a 0.37 line coverage minimum.
 
 Validation update (2026-01-11 21:25JST): `./gradlew testDebugUnitTest` passed after adding `resolveRefreshReason` and receiver tests.
+
+Validation update (2026-01-11 21:28JST): `./gradlew testDebugUnitTest` passed after correcting the sizing test expectation.
 
 ## Idempotence and Recovery
 
@@ -378,5 +409,11 @@ Plan Change Note (2026-01-11 21:25JST): Added the `resolveRefreshReason` helper 
 Plan Change Note (2026-01-11 21:26JST): Ran Spotless after updating receiver tests.
 
 Plan Change Note (2026-01-11 21:26JST): Recorded the refresh reason mapping commit and pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:28JST): Added widget sizing helper exposure and tests, plus the corrected expectation after the initial failure.
+
+Plan Change Note (2026-01-11 21:29JST): Ran Spotless after adding widget sizing tests.
+
+Plan Change Note (2026-01-11 21:29JST): Recorded the widget sizing helper commit and pre-commit stash behavior.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
