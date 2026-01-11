@@ -35,6 +35,7 @@ If Gradle fails with a `JavaVersion.parse 25.0.1` error, activate the configured
 - Indentation: 4 spaces.
 - Classes: `UpperCamelCase`; functions/properties: `lowerCamelCase`.
 - Packages follow `com.example.sioribi.<layer>` and map to folder names under `app/src/main/java/`.
+- Do not bypass git hooks (e.g., `HUSKY=0` or `--no-verify` is prohibited).
 
 ## Testing Guidelines
 
