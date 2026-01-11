@@ -40,6 +40,9 @@ After this change, the project will have broader unit test coverage over domain 
 - Observation: The pre-commit hook stashed unstaged changes during the widget preference writer commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768134113-35029.`
 
+- Observation: The pre-commit hook stashed unstaged changes during the JaCoCo baseline update commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768134235-36969.`
+
 ## Decision Log
 
 - Decision: Focus test expansion on local JVM unit tests for domain and data logic, and avoid new instrumented tests unless Android framework behavior is unavoidable.
@@ -64,6 +67,10 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Decision: Set the initial JaCoCo line coverage minimum to 0.33 based on the baseline report (146 covered / 440 total).
   Rationale: The baseline was 0.3318, so 0.33 keeps the verification meaningful without immediate failures.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Increase the JaCoCo line coverage minimum to 0.37 after regenerating the report (168 covered / 443 total).
+  Rationale: The new baseline is 0.3792, so 0.37 keeps the gate meaningful while allowing small fluctuations.
   Date/Author: 2026-01-11, Codex
 
 - Decision: Replace `buildDir` usage in JaCoCo task inputs with `layout.buildDirectory`.
@@ -238,6 +245,33 @@ Concrete Steps update (2026-01-11 21:20JST): Extracted `writeModelToPreferences`
     ./gradlew testDebugUnitTest
     BUILD SUCCESSFUL in 2s
 
+Concrete Steps update (2026-01-11 21:23JST): Regenerated JaCoCo report, recalculated the baseline, updated the coverage threshold, and verified coverage.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    ./gradlew testDebugUnitTest jacocoTestReport
+    > Task :app:jacocoTestReport
+    BUILD SUCCESSFUL in 1s
+
+    python - <<'PY'
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+    path = Path('app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml')
+    root = ET.parse(path).getroot()
+    line_counter = next(c for c in root.findall('counter') if c.get('type') == 'LINE')
+    missed = int(line_counter.get('missed'))
+    covered = int(line_counter.get('covered'))
+    ratio = covered / (covered + missed)
+    print(f"missed={missed} covered={covered} ratio={ratio:.4f}")
+    PY
+    missed=275 covered=168 ratio=0.3792
+
+    ./gradlew jacocoTestCoverageVerification
+    > Task :app:jacocoTestCoverageVerification
+    BUILD SUCCESSFUL in 2s
+
+    git commit -m "chore: raise jacoco coverage baseline"
+    [feat/unit-test-coverage cd6a520] chore: raise jacoco coverage baseline
+
     git commit -m "refactor(ui): extract widget preference writer"
     [feat/unit-test-coverage 23f4497] refactor(ui): extract widget preference writer
 
@@ -257,6 +291,8 @@ Validation update (2026-01-11 20:52JST): `./gradlew testDebugUnitTest` passed, `
 Validation update (2026-01-11 21:15JST): Re-ran `./gradlew testDebugUnitTest` after each added test batch; all runs passed.
 
 Validation update (2026-01-11 21:20JST): `./gradlew testDebugUnitTest` passed after extracting `writeModelToPreferences` and adding `WidgetUpdateWorkerTest`.
+
+Validation update (2026-01-11 21:23JST): `./gradlew testDebugUnitTest jacocoTestReport` produced updated reports and `./gradlew jacocoTestCoverageVerification` passed with a 0.37 line coverage minimum.
 
 ## Idempotence and Recovery
 
@@ -306,5 +342,9 @@ Plan Change Note (2026-01-11 21:17JST): Recorded the core unit test expansion co
 Plan Change Note (2026-01-11 21:20JST): Recorded the `WidgetUpdateWorker` helper extraction, new test addition, and validation run.
 
 Plan Change Note (2026-01-11 21:22JST): Recorded the widget preference writer commit and pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:23JST): Updated the JaCoCo baseline and raised the coverage threshold to 0.37 after regenerating the report.
+
+Plan Change Note (2026-01-11 21:24JST): Recorded the JaCoCo baseline commit and pre-commit stash behavior.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
