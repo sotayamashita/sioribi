@@ -19,6 +19,7 @@ After this change, the project will have broader unit test coverage over domain 
 - [x] (2026-01-11 20:52JST) Validate tests and coverage tasks on the project.
 - [x] (2026-01-11 21:15JST) Phase 1-3 expansion: added additional data/domain tests, UI sizing edge cases, and a clock-injected scheduler helper with unit tests.
 - [x] (2026-01-11 21:20JST) Phase 3 continuation: extracted `writeModelToPreferences` from `WidgetUpdateWorker` and added unit tests.
+- [x] (2026-01-11 21:25JST) UI/DI coverage: extracted `resolveRefreshReason` helper and added receiver tests for null/unknown actions.
 
 ## Surprises & Discoveries
 
@@ -42,6 +43,9 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Observation: The pre-commit hook stashed unstaged changes during the JaCoCo baseline update commit.
   Evidence: `[INFO] Stashing unstaged files to .../patch1768134235-36969.`
+
+- Observation: The pre-commit hook stashed unstaged changes during the refresh reason mapping commit.
+  Evidence: `[INFO] Stashing unstaged files to .../patch1768134381-39333.`
 
 ## Decision Log
 
@@ -87,6 +91,10 @@ After this change, the project will have broader unit test coverage over domain 
 
 - Decision: Extract `writeModelToPreferences` from `WidgetUpdateWorker` for JVM unit testing of preference updates.
   Rationale: The preference write logic is pure Kotlin and can be tested without Android framework dependencies.
+  Date/Author: 2026-01-11, Codex
+
+- Decision: Extract `resolveRefreshReason` from `WidgetRefreshReceiver` for pure Kotlin tests of intent-to-reason mapping.
+  Rationale: The mapping logic is deterministic and increases UI/DI coverage without Android framework dependencies.
   Date/Author: 2026-01-11, Codex
 
 ## Outcomes & Retrospective
@@ -272,6 +280,22 @@ Concrete Steps update (2026-01-11 21:23JST): Regenerated JaCoCo report, recalcul
     git commit -m "chore: raise jacoco coverage baseline"
     [feat/unit-test-coverage cd6a520] chore: raise jacoco coverage baseline
 
+Concrete Steps update (2026-01-11 21:25JST): Extracted `resolveRefreshReason`, expanded receiver tests, and reran unit tests.
+
+    Working directory: /Users/sotayamashita/AndroidStudioProjects/koyomidots
+    Edited:
+      - app/src/main/java/com/example/sioribi/ui/WidgetRefreshReceiver.kt
+      - app/src/test/java/com/example/sioribi/ui/WidgetRefreshReceiverTest.kt
+
+    ./gradlew testDebugUnitTest
+    BUILD SUCCESSFUL in 3s
+
+    ./gradlew spotlessApply
+    BUILD SUCCESSFUL in 1s
+
+    git commit -m "test(ui): cover refresh reason mapping"
+    [feat/unit-test-coverage 38b57e6] test(ui): cover refresh reason mapping
+
     git commit -m "refactor(ui): extract widget preference writer"
     [feat/unit-test-coverage 23f4497] refactor(ui): extract widget preference writer
 
@@ -293,6 +317,8 @@ Validation update (2026-01-11 21:15JST): Re-ran `./gradlew testDebugUnitTest` af
 Validation update (2026-01-11 21:20JST): `./gradlew testDebugUnitTest` passed after extracting `writeModelToPreferences` and adding `WidgetUpdateWorkerTest`.
 
 Validation update (2026-01-11 21:23JST): `./gradlew testDebugUnitTest jacocoTestReport` produced updated reports and `./gradlew jacocoTestCoverageVerification` passed with a 0.37 line coverage minimum.
+
+Validation update (2026-01-11 21:25JST): `./gradlew testDebugUnitTest` passed after adding `resolveRefreshReason` and receiver tests.
 
 ## Idempotence and Recovery
 
@@ -346,5 +372,11 @@ Plan Change Note (2026-01-11 21:22JST): Recorded the widget preference writer co
 Plan Change Note (2026-01-11 21:23JST): Updated the JaCoCo baseline and raised the coverage threshold to 0.37 after regenerating the report.
 
 Plan Change Note (2026-01-11 21:24JST): Recorded the JaCoCo baseline commit and pre-commit stash behavior.
+
+Plan Change Note (2026-01-11 21:25JST): Added the `resolveRefreshReason` helper and related tests for UI/DI coverage.
+
+Plan Change Note (2026-01-11 21:26JST): Ran Spotless after updating receiver tests.
+
+Plan Change Note (2026-01-11 21:26JST): Recorded the refresh reason mapping commit and pre-commit stash behavior.
 
 Issue Tracking Note: This plan is tracked in repository issue #2.
