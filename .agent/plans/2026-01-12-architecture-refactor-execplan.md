@@ -14,12 +14,13 @@ After this refactor, the app’s widget continues to show the year progress, but
 - [x] (2026-01-12 00:25Z) Surveyed current app structure, widget update flow, dependency wiring, and unit tests.
 - [x] (2026-01-12 01:05Z) Defined target architecture boundaries, interfaces, and naming conventions for the refactor, and listed planned file moves.
 - [x] (2026-01-12 01:20Z) Implemented data layer refactor with repository boundary and updated the domain use case to delegate to it.
-- [ ] Refactor widget update pipeline and UI state mapping to isolate Android-specific code.
-- [ ] Update and expand unit tests and finalize validation commands.
+- [x] (2026-01-12 01:40Z) Refactored the widget update pipeline with coordinator, state writer, and renderer adapters to isolate Android-specific code.
+- [x] (2026-01-12 01:55Z) Updated and expanded unit tests for the new coordinator and verified JVM tests pass.
 
 ## Surprises & Discoveries
 
-- None yet.
+- Observation: The project does not include kotlinx-coroutines-test on the JVM test classpath.
+  Evidence: Kotlin compiler errors for unresolved `kotlinx.coroutines.test.runTest` when running `./gradlew testDebugUnitTest`.
 
 ## Decision Log
 
@@ -164,3 +165,5 @@ When this plan is revised during implementation, add a note at the bottom explai
 
 Plan update note (2026-01-12): Marked milestone 1 as complete and recorded the planned file moves/new files in Artifacts and Notes to lock in the target architecture boundaries.
 Plan update note (2026-01-12): Marked milestone 2 as complete after introducing the repository boundary and updating the use case to depend on it.
+Plan update note (2026-01-12): Marked milestone 3 as complete after introducing the widget update coordinator and Glance adapters.
+Plan update note (2026-01-12): Marked milestone 4 as complete after adding coordinator unit tests and passing JVM tests.

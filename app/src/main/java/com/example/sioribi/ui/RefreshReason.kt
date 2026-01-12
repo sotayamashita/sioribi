@@ -10,4 +10,5 @@ enum class RefreshReason {
     Boot,
     PackageReplaced,
     Periodic,
+    Unknown,
 }

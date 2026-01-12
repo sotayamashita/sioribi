@@ -1,11 +1,7 @@
 package com.example.sioribi.ui
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.preferences.core.MutablePreferences
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.sioribi.SioribiApplication
@@ -17,23 +13,11 @@ class WidgetUpdateWorker(
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         val appGraph = (applicationContext as SioribiApplication).appGraph
-        val model = appGraph.getYearProgressUseCase.execute()
-        val manager = GlanceAppWidgetManager(applicationContext)
-        val glanceIds = manager.getGlanceIds(YearProgressWidget::class.java)
-
-        glanceIds.forEach { glanceId ->
-            updateAppWidgetState(applicationContext, glanceId) { prefs ->
-                writeModelToPreferences(prefs, model)
-            }
-        }
-
-        YearProgressWidget().updateAll(applicationContext)
-
-        val reason = inputData.getString(KEY_REFRESH_REASON) ?: "Unknown"
-        Log.d(
-            "WidgetUpdateWorker",
-            buildWidgetUpdateLogMessage(model, reason),
-        )
+        val reason = inputData.getString(KEY_REFRESH_REASON)
+        val refreshReason =
+            reason?.let { name -> RefreshReason.values().firstOrNull { it.name == name } }
+                ?: RefreshReason.Unknown
+        appGraph.widgetUpdateCoordinator.update(refreshReason)
         return Result.success()
     }
 }
