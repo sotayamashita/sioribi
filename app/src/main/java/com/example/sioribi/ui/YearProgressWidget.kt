@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Build
-import android.util.Log
 import android.util.SizeF
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -124,8 +123,6 @@ class YearProgressWidget : GlanceAppWidget() {
             }
 
             val gridSize = buildGridSize(effectiveSize, gridLayout)
-            logGridLayout(widgetSize, localSize, effectiveSize, gridSize, gridLayout)
-
             widgetLayout(
                 context = context,
                 state =
@@ -320,26 +317,6 @@ internal fun buildGridSize(
                 .coerceAtLeast(0.dp),
     )
 
-private fun logGridLayout(
-    widgetSize: DpSize,
-    localSize: DpSize,
-    effectiveSize: DpSize,
-    gridSize: DpSize,
-    gridLayout: GridLayout,
-) {
-    Log.d(
-        "YearProgressWidget",
-        "Widget size=${widgetSize.width.value}x${widgetSize.height.value} " +
-            "local=${localSize.width.value}x${localSize.height.value} " +
-            "effective=${effectiveSize.width.value}x${effectiveSize.height.value} " +
-            "grid=${gridSize.width.value}x${gridSize.height.value} " +
-            "grid=${gridLayout.columns}x${gridLayout.rows} " +
-            "dot=${gridLayout.dotSize.value} " +
-            "spacing=${gridLayout.horizontalSpacing.value}x${gridLayout.verticalSpacing.value} " +
-            "padding=${gridLayout.padding.value}",
-    )
-}
-
 private fun resolveWidgetSize(
     context: Context,
     glanceId: GlanceId,
@@ -351,13 +328,7 @@ private fun resolveWidgetSize(
     val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
     val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
     val fallbackSize = DpSize(minWidth.dp, minHeight.dp)
-    val resolvedSize = fallbackSize
-    Log.d(
-        "YearProgressWidget",
-        "Widget options min=${minWidth}x$minHeight " +
-            "resolved=${resolvedSize.width.value}x${resolvedSize.height.value}",
-    )
-    return resolvedSize
+    return fallbackSize
 }
 
 class YearProgressWidgetReceiver : GlanceAppWidgetReceiver() {

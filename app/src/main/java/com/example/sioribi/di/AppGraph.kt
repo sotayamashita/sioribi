@@ -13,6 +13,7 @@ import com.example.sioribi.ui.WidgetRenderer
 import com.example.sioribi.ui.WidgetStateWriter
 import com.example.sioribi.ui.WidgetUpdateCoordinator
 import com.example.sioribi.ui.WorkManagerWidgetRefreshEnqueuer
+import com.example.sioribi.ui.YearProgressUiStateMapper
 
 class AppGraph(
     appContext: Context,
@@ -22,11 +23,14 @@ class AppGraph(
         DefaultYearProgressRepository(timeDataSource)
     val getYearProgressUseCase: GetYearProgressUseCase =
         GetYearProgressUseCase(yearProgressRepository)
+    val yearProgressUiStateMapper: YearProgressUiStateMapper =
+        YearProgressUiStateMapper()
     val widgetStateWriter: WidgetStateWriter = GlanceWidgetStateWriter(appContext)
     val widgetRenderer: WidgetRenderer = GlanceWidgetRenderer(appContext)
     val widgetUpdateCoordinator: WidgetUpdateCoordinator =
         WidgetUpdateCoordinator(
             getYearProgressUseCase = getYearProgressUseCase,
+            mapper = yearProgressUiStateMapper,
             stateWriter = widgetStateWriter,
             renderer = widgetRenderer,
         )

@@ -2,34 +2,35 @@ package com.example.sioribi.ui
 
 import android.util.Log
 import com.example.sioribi.domain.GetYearProgressUseCase
-import com.example.sioribi.domain.YearProgressModel
 
 class WidgetUpdateCoordinator(
     private val getYearProgressUseCase: GetYearProgressUseCase,
+    private val mapper: YearProgressUiStateMapper,
     private val stateWriter: WidgetStateWriter,
     private val renderer: WidgetRenderer,
     private val logger: WidgetUpdateLogger = DefaultWidgetUpdateLogger(),
 ) {
     suspend fun update(reason: RefreshReason) {
-        val model = getYearProgressUseCase.execute()
-        stateWriter.write(model)
+        val progress = getYearProgressUseCase()
+        val state = mapper.map(progress)
+        stateWriter.write(state)
         renderer.render()
-        logger.log(model, reason)
+        logger.log(state, reason)
     }
 }
 
 interface WidgetUpdateLogger {
     fun log(
-        model: YearProgressModel,
+        state: YearProgressUiState,
         reason: RefreshReason,
     )
 }
 
 class DefaultWidgetUpdateLogger : WidgetUpdateLogger {
     override fun log(
-        model: YearProgressModel,
+        state: YearProgressUiState,
         reason: RefreshReason,
     ) {
-        Log.d("WidgetUpdateCoordinator", buildWidgetUpdateLogMessage(model, reason.name))
+        Log.d("WidgetUpdateCoordinator", buildWidgetUpdateLogMessage(state, reason.name))
     }
 }

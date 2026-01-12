@@ -13,11 +13,11 @@ After this refactor, the year-progress widget still renders the same visual outp
 - [x] (2026-01-12 12:20Z) Reviewed local architecture guidance for data layer, domain layer, UI layer, and testing.
 - [x] (2026-01-12 12:35Z) Audited the current codebase and existing ExecPlan for mismatches, inconsistencies, and noisy logs.
 - [x] (2026-01-12 13:05Z) Refined test strategy with concrete add/update/remove test cases for the new model and UI state mapping.
-- [ ] Define and implement the refined domain model and UI state mapper.
-- [ ] Refactor the widget update pipeline to use UI state instead of domain models.
-- [ ] Normalize logging and remove or gate per-render debug logs.
-- [ ] Update unit tests to cover the new mapper, update pipeline, and logging behavior.
-- [ ] Run formatter and JVM unit tests to validate behavior.
+- [x] (2026-01-12 13:25Z) Defined the refined domain model and added the UI state mapper with percent/formatting logic.
+- [x] (2026-01-12 13:30Z) Refactored the widget update pipeline to use UI state and updated the dependency graph.
+- [x] (2026-01-12 13:35Z) Removed per-render widget debug logging to avoid noisy logs.
+- [x] (2026-01-12 13:45Z) Updated unit tests, added mapper coverage, and removed obsolete model tests.
+- [x] (2026-01-12 13:50Z) Ran `./gradlew testDebugUnitTest` successfully.
 
 ## Surprises & Discoveries
 
@@ -27,6 +27,8 @@ After this refactor, the year-progress widget still renders the same visual outp
   Evidence: `writeModelToPreferences` is defined in `app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt` and used in `app/src/main/java/com/example/sioribi/ui/GlanceWidgetAdapters.kt`.
 - Observation: Debug logs are emitted during widget composition and size resolution, which can be noisy for normal usage.
   Evidence: `Log.d` calls in `app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt`.
+- Observation: `BuildConfig` is not generated in this module, so log gating needs to avoid referencing it.
+  Evidence: Kotlin compile error `Unresolved reference 'BuildConfig'` in `YearProgressWidget.kt` when running `./gradlew testDebugUnitTest`.
 
 ## Decision Log
 
@@ -45,10 +47,13 @@ After this refactor, the year-progress widget still renders the same visual outp
 - Decision: Remove low-value data-class tests and add focused mapper tests, preferring fakes over mocks in unit tests.
   Rationale: Tests should validate behavior rather than Kotlin data-class mechanics, and local guidance prefers deterministic fakes over mocks.
   Date/Author: 2026-01-12 / Codex
+- Decision: Remove per-render widget debug logs instead of gating them with `BuildConfig`.
+  Rationale: `BuildConfig` is not generated in this module and the logs were considered noisy for normal usage; removing them keeps logs meaningful without extra Gradle changes.
+  Date/Author: 2026-01-12 / Codex
 
 ## Outcomes & Retrospective
 
-- Not started yet.
+- (2026-01-12) Completed the refactor with a new domain model, UI state mapper, updated coordinator pipeline, and refreshed tests. JVM unit tests pass, and widget update logs remain concise.
 
 ## Context and Orientation
 
@@ -236,3 +241,4 @@ When this plan is revised during implementation, add a note at the bottom explai
 
 Plan update note (2026-01-12): Replaced the previous ExecPlan with a new consistency-focused refactor plan after auditing current code and local architecture guidance, incorporating model/UI state separation, logging normalization, and test strategy updates.
 Plan update note (2026-01-12): Added a concrete, file-level test plan specifying which tests to add, update, and remove, including mapper coverage and fake-first guidance.
+Plan update note (2026-01-12): Marked implementation steps complete, recorded the BuildConfig discovery, and documented the logging decision after finishing code changes and JVM tests.

@@ -15,8 +15,6 @@ class DefaultYearProgressRepositoryTest {
         assertThat(result.year).isEqualTo(2026)
         assertThat(result.totalDays).isEqualTo(365)
         assertThat(result.currentDay).isEqualTo(4)
-        assertThat(result.progressPercentage).isEqualTo(1)
-        assertThat(result.formattedString).isEqualTo("4/365")
     }
 
     @Test
@@ -29,8 +27,6 @@ class DefaultYearProgressRepositoryTest {
         assertThat(result.year).isEqualTo(2024)
         assertThat(result.totalDays).isEqualTo(366)
         assertThat(result.currentDay).isEqualTo(60)
-        assertThat(result.progressPercentage).isEqualTo(16)
-        assertThat(result.formattedString).isEqualTo("60/366")
     }
 
     @Test
@@ -42,8 +38,6 @@ class DefaultYearProgressRepositoryTest {
 
         assertThat(result.totalDays).isEqualTo(366)
         assertThat(result.currentDay).isEqualTo(1)
-        assertThat(result.progressPercentage).isEqualTo(0)
-        assertThat(result.formattedString).isEqualTo("1/366")
     }
 
     @Test
@@ -55,8 +49,6 @@ class DefaultYearProgressRepositoryTest {
 
         assertThat(result.totalDays).isEqualTo(366)
         assertThat(result.currentDay).isEqualTo(59)
-        assertThat(result.progressPercentage).isEqualTo(16)
-        assertThat(result.formattedString).isEqualTo("59/366")
     }
 
     @Test
@@ -68,8 +60,6 @@ class DefaultYearProgressRepositoryTest {
 
         assertThat(result.totalDays).isEqualTo(365)
         assertThat(result.currentDay).isEqualTo(1)
-        assertThat(result.progressPercentage).isEqualTo(0)
-        assertThat(result.formattedString).isEqualTo("1/365")
     }
 
     @Test
@@ -81,8 +71,6 @@ class DefaultYearProgressRepositoryTest {
 
         assertThat(result.totalDays).isEqualTo(365)
         assertThat(result.currentDay).isEqualTo(365)
-        assertThat(result.progressPercentage).isEqualTo(100)
-        assertThat(result.formattedString).isEqualTo("365/365")
     }
 
     @Test
@@ -94,8 +82,6 @@ class DefaultYearProgressRepositoryTest {
 
         assertThat(result.totalDays).isEqualTo(366)
         assertThat(result.currentDay).isEqualTo(366)
-        assertThat(result.progressPercentage).isEqualTo(100)
-        assertThat(result.formattedString).isEqualTo("366/366")
     }
 
     @Test
@@ -107,8 +93,6 @@ class DefaultYearProgressRepositoryTest {
 
         assertThat(result.totalDays).isEqualTo(365)
         assertThat(result.currentDay).isEqualTo(32)
-        assertThat(result.progressPercentage).isEqualTo(9)
-        assertThat(result.formattedString).isEqualTo("32/365")
     }
 
     private class FakeTimeDataSource(

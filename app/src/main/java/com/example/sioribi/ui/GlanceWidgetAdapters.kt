@@ -5,17 +5,16 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
-import com.example.sioribi.domain.YearProgressModel
 
 class GlanceWidgetStateWriter(
     private val context: Context,
     private val manager: GlanceAppWidgetManager = GlanceAppWidgetManager(context),
 ) : WidgetStateWriter {
-    override suspend fun write(model: YearProgressModel) {
+    override suspend fun write(state: YearProgressUiState) {
         val glanceIds = manager.getGlanceIds(YearProgressWidget::class.java)
         glanceIds.forEach { glanceId ->
             updateAppWidgetState(context, glanceId) { prefs ->
-                writeModelToPreferences(prefs, model)
+                writeUiStateToPreferences(prefs, state)
             }
         }
     }

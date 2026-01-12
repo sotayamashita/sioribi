@@ -8,23 +8,21 @@ class GetYearProgressUseCaseTest {
     @Test
     fun `delegates to repository`() {
         val expected =
-            YearProgressModel(
+            YearProgress(
                 currentDay = 4,
                 totalDays = 365,
                 year = 2026,
-                progressPercentage = 1,
-                formattedString = "4/365",
             )
         val useCase = GetYearProgressUseCase(FakeYearProgressRepository(expected))
 
-        val result = useCase.execute()
+        val result = useCase()
 
         assertThat(result).isEqualTo(expected)
     }
 
     private class FakeYearProgressRepository(
-        private val model: YearProgressModel,
+        private val model: YearProgress,
     ) : YearProgressRepository {
-        override fun getYearProgress(): YearProgressModel = model
+        override fun getYearProgress(): YearProgress = model
     }
 }

@@ -5,5 +5,5 @@ import com.example.sioribi.data.YearProgressRepository
 class GetYearProgressUseCase(
     private val yearProgressRepository: YearProgressRepository,
 ) {
-    fun execute(): YearProgressModel = yearProgressRepository.getYearProgress()
+    operator fun invoke(): YearProgress = yearProgressRepository.getYearProgress()
 }

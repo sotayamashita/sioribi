@@ -1,7 +1,6 @@
 package com.example.sioribi.data
 
-import com.example.sioribi.domain.YearProgressModel
-import kotlin.math.roundToInt
+import com.example.sioribi.domain.YearProgress
 
 class DefaultYearProgressRepository(
     private val timeDataSource: TimeDataSource,
@@ -9,23 +8,17 @@ class DefaultYearProgressRepository(
     companion object {
         private const val COMMON_YEAR_DAYS = 365
         private const val LEAP_YEAR_DAYS = 366
-        private const val PERCENT_SCALE = 100
     }
 
-    override fun getYearProgress(): YearProgressModel {
+    override fun getYearProgress(): YearProgress {
         val today = timeDataSource.today()
         val year = today.year
         val totalDays = if (today.isLeapYear) LEAP_YEAR_DAYS else COMMON_YEAR_DAYS
         val currentDay = today.dayOfYear
-        val progressPercentage =
-            (currentDay.toDouble() / totalDays.toDouble() * PERCENT_SCALE).roundToInt()
-        val formattedString = "$currentDay/$totalDays"
-        return YearProgressModel(
+        return YearProgress(
             currentDay = currentDay,
             totalDays = totalDays,
             year = year,
-            progressPercentage = progressPercentage,
-            formattedString = formattedString,
         )
     }
 }
