@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5
+        with:
+          distribution: corretto
+          java-version: "21"
+          cache: gradle
+
+      - name: Compute version info
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Versioning policy: docs/versioning-policy.md
+          yy=$(date -u +%y)
+          mm=$(date -u +%m)
+          dd=$(date -u +%d)
+          ww=$(( (10#$dd - 1) / 7 + 1 ))
+          ww=$(printf "%02d" "$ww")
+          short_hash=$(git rev-parse --short=7 HEAD)
+          version_prefix="${yy}.${mm}.${ww}"
+          version_name="${version_prefix}.${short_hash}"
+          existing_count=$(git tag -l "v${version_prefix}.*" | wc -l | tr -d ' ')
+          nn=$(printf "%02d" "$existing_count")
+          version_code="${yy}${mm}${ww}${nn}"
+          echo "version_name=${version_name}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${version_code}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare signing keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "${ANDROID_KEYSTORE_BASE64}" | base64 -d > keystore.jks
+          cat > keystore.properties <<EOF
+          storeFile=keystore.jks
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          EOF
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Prepare Play credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fastlane
+          echo "${GOOGLE_PLAY_JSON_KEY}" > fastlane/google-play-key.json
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease -PversionName="${{ steps.version.outputs.version_name }}" -PversionCode="${{ steps.version.outputs.version_code }}"
+
+      - name: Build release AAB
+        run: ./gradlew bundleRelease -PversionName="${{ steps.version.outputs.version_name }}" -PversionCode="${{ steps.version.outputs.version_code }}"
+
+      - name: Locate APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk_path=$(ls app/build/outputs/apk/release/*.apk 2>/dev/null | head -n 1)
+          if [ -z "${apk_path}" ]; then
+            echo "Release APK not found under app/build/outputs/apk/release/" >&2
+            exit 1
+          fi
+          echo "path=${apk_path}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@de2c0ea772f7dbb18a6ad93cfb65fbee4d3b5ee8 # v2
+        with:
+          tag_name: "v${{ steps.version.outputs.version_name }}"
+          name: "v${{ steps.version.outputs.version_name }}"
+          generate_release_notes: true
+          files: ${{ steps.apk.outputs.path }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@e7168f2713e6a7d2a85ad55bd77fe39d1e8c9c30 # v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install fastlane
+        run: gem install fastlane -N
+
+      - name: Upload to Play internal testing
+        run: fastlane android internal

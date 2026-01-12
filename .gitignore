@@ -11,3 +11,8 @@
 local.properties
 keystore.properties
 *.jks
+*.keystore
+*.p12
+*.pfx
+fastlane/google-play-key.json
+
