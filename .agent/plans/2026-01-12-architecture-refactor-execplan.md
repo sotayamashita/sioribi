@@ -12,7 +12,7 @@ After this refactor, the app’s widget continues to show the year progress, but
 
 - [x] (2026-01-12 00:15Z) Read local architecture guidance indexes and core pages for layered architecture, UI layer, data layer, domain layer, and testing.
 - [x] (2026-01-12 00:25Z) Surveyed current app structure, widget update flow, dependency wiring, and unit tests.
-- [ ] Define target architecture boundaries, interfaces, and naming conventions for the refactor.
+- [x] (2026-01-12 01:05Z) Defined target architecture boundaries, interfaces, and naming conventions for the refactor, and listed planned file moves.
 - [ ] Implement data layer refactor and adjust domain layer use cases.
 - [ ] Refactor widget update pipeline and UI state mapping to isolate Android-specific code.
 - [ ] Update and expand unit tests and finalize validation commands.
@@ -101,9 +101,17 @@ The steps are designed to be additive and safe. Refactors should be performed by
 
 The following list will be populated during implementation to make the refactor reproducible by a newcomer:
 
-- Planned file moves and new files (to be filled in when milestones are executed).
-- Short example log lines from widget update runs.
-- Minimal diffs for interface introductions and coordinator wiring.
+- Planned file moves and new files:
+  - New: `app/src/main/java/com/example/sioribi/data/YearProgressRepository.kt`
+  - New: `app/src/main/java/com/example/sioribi/data/DefaultYearProgressRepository.kt`
+  - New: `app/src/main/java/com/example/sioribi/ui/WidgetStateWriter.kt`
+  - New: `app/src/main/java/com/example/sioribi/ui/WidgetRenderer.kt`
+  - New: `app/src/main/java/com/example/sioribi/ui/WidgetUpdateCoordinator.kt`
+  - Update in place: `app/src/main/java/com/example/sioribi/domain/GetYearProgressUseCase.kt`
+  - Update in place: `app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt`
+  - Update in place: `app/src/main/java/com/example/sioribi/di/AppGraph.kt`
+- Short example log lines from widget update runs (to be captured once wired).
+- Minimal diffs for interface introductions and coordinator wiring (to be captured during implementation).
 
 ## Interfaces and Dependencies
 
@@ -153,3 +161,5 @@ Prefer fakes over mocks, keep tests deterministic, and avoid Android framework d
 ## Notes on Plan Maintenance
 
 When this plan is revised during implementation, add a note at the bottom explaining what changed and why, and update all sections to remain self-contained.
+
+Plan update note (2026-01-12): Marked milestone 1 as complete and recorded the planned file moves/new files in Artifacts and Notes to lock in the target architecture boundaries.
