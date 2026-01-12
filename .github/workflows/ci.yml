@@ -18,11 +18,11 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      - name: Unit Tests (PR)
+      - name: Unit Tests (Pull Request)
         if: github.event_name == 'pull_request'
         run: ./gradlew testDebugUnitTest --configuration-cache
 
-      - name: Unit Tests + JaCoCo (push)
+      - name: Unit Tests + JaCoCo (Push)
         if: github.event_name == 'push'
         run: ./gradlew testDebugUnitTest jacocoTestReport --configuration-cache
 
