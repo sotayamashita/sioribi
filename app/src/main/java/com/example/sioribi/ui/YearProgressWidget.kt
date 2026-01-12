@@ -59,6 +59,8 @@ private val INACTIVE_COLOR_RES = R.color.widget_dot_inactive
 private val TEXT_COLOR_RES = R.color.widget_text
 private val FOOTER_SPACING = 12.dp
 private val FOOTER_HEIGHT = 20.dp
+
+// Minimum columns to keep the grid density consistent (19 dots per row).
 private const val MIN_GRID_COLUMNS = 19
 private const val DOT_SPACING_RATIO = 0.55f
 private const val PADDING_RATIO = 1.8f

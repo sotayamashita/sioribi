@@ -3,6 +3,7 @@ package com.example.sioribi.ui
 import androidx.compose.ui.unit.DpSize
 import kotlin.math.roundToInt
 
+// Scales the dot radius independently of layout spacing to tune visual density.
 private const val DOT_DRAW_SCALE = 0.45f
 
 internal data class BitmapSize(
