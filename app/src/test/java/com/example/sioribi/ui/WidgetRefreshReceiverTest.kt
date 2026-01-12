@@ -91,6 +91,13 @@ class WidgetRefreshReceiverTest {
         assertThat(resolveRefreshReason(null)).isNull()
     }
 
+    @Test
+    fun refreshReasonFromName_defaultsToUnknown() {
+        assertThat(refreshReasonFromName("Manual")).isEqualTo(RefreshReason.Manual)
+        assertThat(refreshReasonFromName("Missing")).isEqualTo(RefreshReason.Unknown)
+        assertThat(refreshReasonFromName(null)).isEqualTo(RefreshReason.Unknown)
+    }
+
     private class FakeEnqueuer : WidgetRefreshEnqueuer {
         val reasons = mutableListOf<RefreshReason>()
 

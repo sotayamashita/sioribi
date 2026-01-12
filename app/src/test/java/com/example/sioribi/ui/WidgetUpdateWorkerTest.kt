@@ -1,24 +1,23 @@
 package com.example.sioribi.ui
 
 import androidx.datastore.preferences.core.mutablePreferencesOf
-import com.example.sioribi.domain.YearProgressModel
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class WidgetUpdateWorkerTest {
     @Test
-    fun `writeModelToPreferences stores model values`() {
+    fun `writeUiStateToPreferences stores state values`() {
         val preferences = mutablePreferencesOf()
-        val model =
-            YearProgressModel(
+        val state =
+            YearProgressUiState(
                 currentDay = 10,
                 totalDays = 365,
                 year = 2026,
-                progressPercentage = 3,
-                formattedString = "10/365",
+                formatted = "10/365",
+                progressPercent = 3,
             )
 
-        writeModelToPreferences(preferences, model)
+        writeUiStateToPreferences(preferences, state)
 
         assertThat(preferences[YearProgressWidget.KEY_CURRENT_DAY]).isEqualTo(10)
         assertThat(preferences[YearProgressWidget.KEY_TOTAL_DAYS]).isEqualTo(365)
@@ -27,17 +26,17 @@ class WidgetUpdateWorkerTest {
     }
 
     @Test
-    fun `buildWidgetUpdateLogMessage formats model and reason`() {
-        val model =
-            YearProgressModel(
+    fun `buildWidgetUpdateLogMessage formats state and reason`() {
+        val state =
+            YearProgressUiState(
                 currentDay = 1,
                 totalDays = 365,
                 year = 2026,
-                progressPercentage = 1,
-                formattedString = "1/365",
+                formatted = "1/365",
+                progressPercent = 1,
             )
 
-        val message = buildWidgetUpdateLogMessage(model, "Manual")
+        val message = buildWidgetUpdateLogMessage(state, "Manual")
 
         assertThat(message).isEqualTo("Updated widget for 2026: 1/365 reason=Manual")
     }

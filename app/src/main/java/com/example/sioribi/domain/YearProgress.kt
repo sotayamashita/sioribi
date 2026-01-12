@@ -1,9 +1,7 @@
 package com.example.sioribi.domain
 
-data class YearProgressModel(
+data class YearProgress(
     val currentDay: Int,
     val totalDays: Int,
     val year: Int,
-    val progressPercentage: Int,
-    val formattedString: String,
 )

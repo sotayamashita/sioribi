@@ -10,4 +10,10 @@ enum class RefreshReason {
     Boot,
     PackageReplaced,
     Periodic,
+    Unknown,
 }
+
+internal fun refreshReasonFromName(name: String?): RefreshReason =
+    name?.let { raw ->
+        RefreshReason.values().firstOrNull { it.name == raw }
+    } ?: RefreshReason.Unknown
