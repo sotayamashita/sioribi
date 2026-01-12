@@ -13,10 +13,7 @@ class WidgetUpdateWorker(
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         val appGraph = (applicationContext as SioribiApplication).appGraph
-        val reason = inputData.getString(KEY_REFRESH_REASON)
-        val refreshReason =
-            reason?.let { name -> RefreshReason.values().firstOrNull { it.name == name } }
-                ?: RefreshReason.Unknown
+        val refreshReason = refreshReasonFromName(inputData.getString(KEY_REFRESH_REASON))
         appGraph.widgetUpdateCoordinator.update(refreshReason)
         return Result.success()
     }

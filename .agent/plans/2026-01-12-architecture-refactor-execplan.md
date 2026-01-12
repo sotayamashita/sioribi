@@ -16,6 +16,7 @@ After this refactor, the app’s widget continues to show the year progress, but
 - [x] (2026-01-12 01:20Z) Implemented data layer refactor with repository boundary and updated the domain use case to delegate to it.
 - [x] (2026-01-12 01:40Z) Refactored the widget update pipeline with coordinator, state writer, and renderer adapters to isolate Android-specific code.
 - [x] (2026-01-12 01:55Z) Updated and expanded unit tests for the new coordinator and verified JVM tests pass.
+- [x] (2026-01-12 02:10Z) Added a refresh-reason parsing helper and unit coverage for name parsing defaults.
 
 ## Surprises & Discoveries
 
@@ -167,3 +168,4 @@ Plan update note (2026-01-12): Marked milestone 1 as complete and recorded the p
 Plan update note (2026-01-12): Marked milestone 2 as complete after introducing the repository boundary and updating the use case to depend on it.
 Plan update note (2026-01-12): Marked milestone 3 as complete after introducing the widget update coordinator and Glance adapters.
 Plan update note (2026-01-12): Marked milestone 4 as complete after adding coordinator unit tests and passing JVM tests.
+Plan update note (2026-01-12): Added refresh reason parsing helper and tests to avoid inline enum scans in the worker.
