@@ -18,10 +18,16 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      - name: Unit Tests
-        run: ./gradlew testDebugUnitTest jacocoTestReport
+      - name: Unit Tests (PR)
+        if: github.event_name == 'pull_request'
+        run: ./gradlew testDebugUnitTest --configuration-cache
+
+      - name: Unit Tests + JaCoCo (push)
+        if: github.event_name == 'push'
+        run: ./gradlew testDebugUnitTest jacocoTestReport --configuration-cache
 
       - name: Upload JaCoCo Report
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: jacoco-test-report
