@@ -1,4 +1,4 @@
-# Refactor Sioribi Architecture and Test Strategy
+# Recalibrate Sioribi Architecture and Test Strategy (Consistency Pass)
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
@@ -6,31 +6,44 @@ This plan must be maintained in accordance with `.agent/PLANS.md`.
 
 ## Purpose / Big Picture
 
-After this refactor, the app’s widget continues to show the year progress, but the codebase is organized around clear Android architecture boundaries so that business logic is reusable, UI logic is isolated, and data access is testable. The result is easier to change and verify: a newcomer can update widget behavior or time calculations by changing a single layer and can prove correctness by running the JVM tests and seeing the widget update logs after a manual refresh. The refactor is guided by the local Android architecture documentation in `docs/guide-to-app-architecture/...`.
+After this refactor, the year-progress widget still renders the same visual output, but the codebase aligns more closely with Android’s layered architecture guidance and general software design principles. Business rules live in the data/domain layers, UI formatting and widget state production live in the UI layer, and Android-specific glue is isolated behind interfaces. Logging is intentional and non-noisy. A newcomer can confirm correctness by running JVM unit tests and by manually refreshing the widget and seeing a single, meaningful update log line.
 
 ## Progress
 
-- [x] (2026-01-12 00:15Z) Read local architecture guidance indexes and core pages for layered architecture, UI layer, data layer, domain layer, and testing.
-- [x] (2026-01-12 00:25Z) Surveyed current app structure, widget update flow, dependency wiring, and unit tests.
-- [x] (2026-01-12 01:05Z) Defined target architecture boundaries, interfaces, and naming conventions for the refactor, and listed planned file moves.
-- [x] (2026-01-12 01:20Z) Implemented data layer refactor with repository boundary and updated the domain use case to delegate to it.
-- [x] (2026-01-12 01:40Z) Refactored the widget update pipeline with coordinator, state writer, and renderer adapters to isolate Android-specific code.
-- [x] (2026-01-12 01:55Z) Updated and expanded unit tests for the new coordinator and verified JVM tests pass.
-- [x] (2026-01-12 02:10Z) Added a refresh-reason parsing helper and unit coverage for name parsing defaults.
+- [x] (2026-01-12 12:20Z) Reviewed local architecture guidance for data layer, domain layer, UI layer, and testing.
+- [x] (2026-01-12 12:35Z) Audited the current codebase and existing ExecPlan for mismatches, inconsistencies, and noisy logs.
+- [x] (2026-01-12 13:05Z) Refined test strategy with concrete add/update/remove test cases for the new model and UI state mapping.
+- [ ] Define and implement the refined domain model and UI state mapper.
+- [ ] Refactor the widget update pipeline to use UI state instead of domain models.
+- [ ] Normalize logging and remove or gate per-render debug logs.
+- [ ] Update unit tests to cover the new mapper, update pipeline, and logging behavior.
+- [ ] Run formatter and JVM unit tests to validate behavior.
 
 ## Surprises & Discoveries
 
-- Observation: The project does not include kotlinx-coroutines-test on the JVM test classpath.
-  Evidence: Kotlin compiler errors for unresolved `kotlinx.coroutines.test.runTest` when running `./gradlew testDebugUnitTest`.
+- Observation: The domain model currently includes UI-facing fields (`formattedString`, `progressPercentage`) that are only used by widget rendering and logging.
+  Evidence: `app/src/main/java/com/example/sioribi/domain/YearProgressModel.kt` and usages in `app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt`.
+- Observation: UI helper functions live in a worker file, but are used by non-worker classes.
+  Evidence: `writeModelToPreferences` is defined in `app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt` and used in `app/src/main/java/com/example/sioribi/ui/GlanceWidgetAdapters.kt`.
+- Observation: Debug logs are emitted during widget composition and size resolution, which can be noisy for normal usage.
+  Evidence: `Log.d` calls in `app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt`.
 
 ## Decision Log
 
-- Decision: Use the existing manual dependency graph (`app/src/main/java/com/example/sioribi/di/AppGraph.kt`) and improve its structure instead of migrating to Hilt.
-  Rationale: The app is a single-module widget app with a small dependency surface; manual DI remains simpler while still meeting the dependency injection guidance as long as constructor injection and interfaces are used consistently.
+- Decision: Keep manual dependency injection via `AppGraph` instead of migrating to Hilt.
+  Rationale: The app is single-module and already uses constructor injection with a small dependency surface area; manual DI remains simpler and consistent with dependency injection guidance.
   Date/Author: 2026-01-12 / Codex
 
-- Decision: Keep the domain layer focused on pure business logic and avoid introducing Android types into domain classes.
-  Rationale: The local guidance stresses that UI logic and Android framework dependencies should remain in the UI layer, while domain logic should remain reusable and testable.
+- Decision: Split the domain model from UI formatting by introducing a UI-layer mapper and a UI state type.
+  Rationale: The UI layer should be responsible for producing UI-ready state and formatting, while the domain layer should remain reusable and UI-agnostic per the local architecture guidance.
+  Date/Author: 2026-01-12 / Codex
+
+- Decision: Remove unused domain fields (such as `progressPercentage`) and compute any derived UI fields in the UI mapper.
+  Rationale: Unused or UI-specific data in domain models creates layer leakage and reduces clarity; derived data should be computed where it is consumed.
+  Date/Author: 2026-01-12 / Codex
+
+- Decision: Remove low-value data-class tests and add focused mapper tests, preferring fakes over mocks in unit tests.
+  Rationale: Tests should validate behavior rather than Kotlin data-class mechanics, and local guidance prefers deterministic fakes over mocks.
   Date/Author: 2026-01-12 / Codex
 
 ## Outcomes & Retrospective
@@ -39,44 +52,51 @@ After this refactor, the app’s widget continues to show the year progress, but
 
 ## Context and Orientation
 
-This repository contains a single Android app module in `app/`. The current architecture is simple but mixed: a `TimeDataSource` lives in `data/`, a `GetYearProgressUseCase` in `domain/` computes the model, and UI/widget classes in `ui/` both render and orchestrate updates using WorkManager. The manual dependency graph is in `app/src/main/java/com/example/sioribi/di/AppGraph.kt`, and the application class (`app/src/main/java/com/example/sioribi/SioribiApplication.kt`) schedules daily updates. Unit tests live in `app/src/test/java/` and include widget layout, sizing, and worker tests.
+This repository is a single Android app module in `app/`. The current structure already has `data/`, `domain/`, `di/`, and `ui/` packages under `app/src/main/java/com/example/sioribi/`. The widget is implemented with Glance and stores its state in DataStore preferences. The update flow is: refresh trigger (WorkManager or broadcast) → `WidgetUpdateWorker` → `WidgetUpdateCoordinator` → `WidgetStateWriter` → `WidgetRenderer`.
 
-Key guidance to align with (local docs):
+Current issues relative to local guidance:
 
-- Layered architecture with repository boundaries and a single source of truth, and using coroutines/flows for layer communication where needed. See `docs/guide-to-app-architecture/architecture-recommendations/recommendations-for-android-architecture.md` and `docs/guide-to-app-architecture/data-layer-libraries/about-the-data-layer/data-layer.md`.
-- UI layer should be driven by immutable UI state and unidirectional data flow; UI logic should stay in the UI layer, and ViewModel/state-holder logic should be testable. See `docs/guide-to-app-architecture/ui-layer-libraries/about-the-ui-layer/ui-layer.md`.
-- Domain layer is optional but appropriate for reusable or complex business logic; use cases should be small and testable. See `docs/guide-to-app-architecture/domain-layer/domain-layer.md`.
-- Testing strategy should emphasize unit tests for data and domain logic and prefer fakes over mocks. See `docs/guide-to-app-architecture/architecture-recommendations/recommendations-for-android-architecture.md`.
+- The domain model (`YearProgressModel`) includes UI-specific formatting and percent values, which makes the data layer effectively produce UI state.
+- UI mapping functions (`writeModelToPreferences`, `buildWidgetUpdateLogMessage`) live in the worker file, which mixes concerns and obscures their reuse.
+- The widget composition logs layout sizing every render, creating noisy logs and obscuring meaningful update logs.
+- Tests include a low-value model “data class holds values” test and use mocking where simple fakes would suffice.
+
+Local guidance that anchors this plan:
+
+- Data layer and repository boundaries, immutability, and avoiding direct data source access. See `docs/guide-to-app-architecture/data-layer-libraries/about-the-data-layer/data-layer.md`.
+- Domain layer as reusable business logic without UI dependencies. See `docs/guide-to-app-architecture/domain-layer/domain-layer.md`.
+- UI layer as the pipeline that converts domain data into UI state. See `docs/guide-to-app-architecture/ui-layer-libraries/about-the-ui-layer/ui-layer.md`.
+- Testing guidance and preference for fakes over mocks. See `docs/guide-to-app-architecture/architecture-recommendations/recommendations-for-android-architecture.md`.
 
 Definitions used in this plan:
 
-- Repository: A data layer class that exposes app data to the rest of the app and abstracts data sources, following the guidance in the data layer doc.
-- Use case: A domain layer class that encapsulates a single piece of business logic and is reusable across UI consumers.
-- UI state: An immutable snapshot of the data required to render the widget UI.
-- Widget update pipeline: The flow from a refresh trigger (WorkManager or broadcast) to writing state and calling the widget to update.
+- Domain model: A pure, UI-agnostic representation of year progress (raw numbers only).
+- UI state: The immutable, UI-ready data used to render the widget (includes formatted strings and display-friendly values).
+- Mapper: A UI-layer class that converts the domain model into UI state.
+- Widget update pipeline: The path from a refresh trigger to persisted widget state and a render call.
 
 ## Plan of Work
 
-First, define a target architecture that cleanly separates the layers and provides explicit interfaces for each external dependency. This includes a data layer repository for year progress, a domain layer use case that consumes the repository, and UI layer adapters that transform the domain model into widget-specific UI state. The goal is that Android-specific classes (WorkManager, Glance, Context) live only in the UI layer, and business rules live only in the domain layer.
+First, define a refined domain model that represents only the raw year progress data needed by other layers. Keep this model in the domain layer and update the data layer repository to return it. Replace `GetYearProgressUseCase.execute()` with a more idiomatic `operator fun invoke()` to align with local domain-layer conventions.
 
-Next, refactor the data layer to introduce a repository boundary, keep the current `TimeDataSource` as a data source, and ensure that the data layer exposes immutable models. This refactor should move any “source of truth” decisions into the data layer (for this app, the source of truth is the current date from the clock), and it should make it possible to replace the time source in tests via a fake implementation.
+Next, create a UI-layer mapper (a simple class or function) that converts the domain model into a widget UI state. This UI state is the only data shape that the widget rendering and preferences writing should use. Move UI-specific helpers (`writeModelToPreferences`, log message formatting) into a dedicated UI file so they are not tied to worker implementation.
 
-Then, refactor the domain layer so the use case depends on the new repository instead of the data source directly. Keep `YearProgressModel` as a pure model, and if UI-friendly formatting is needed, create a dedicated mapper in the UI layer to avoid mixing UI concerns into domain classes.
+Then, refactor the widget update pipeline: the coordinator should fetch the domain model, map it to UI state, write UI state to preferences, render, and log. This preserves unidirectional flow: domain data → UI state → widget rendering. Update the worker to delegate to the coordinator without knowing details of the UI state or mapping.
 
-After that, refactor the widget update pipeline. Introduce a small UI-layer “state holder” or “coordinator” class that takes a `YearProgressUseCase`, a `WidgetStateWriter`, and a `WidgetRenderer` interface. The worker should delegate to this class rather than directly calling the use case and Glance APIs. This isolates Android framework interactions behind interfaces for testing and supports unidirectional flow: compute domain model → map to UI state → persist widget state → render. The widget composable should consume only the widget UI state and perform rendering without calling the domain layer directly. Keep refresh scheduling logic in a dedicated scheduler class to make it testable and focused.
+After that, normalize logging. Keep a single update log line for manual or scheduled refreshes, and gate layout/debug logs behind a debug check or remove them entirely. This ensures logs are meaningful and avoids per-render spam.
 
-Finally, update tests. Replace any direct Android framework dependency in unit tests with fakes or test doubles. Add or update tests for the new repository and mapper, rework worker tests to use fake `WidgetStateWriter`/`WidgetRenderer`, and ensure UI state normalization remains covered. Keep existing sizing/drawing tests and update names if files move. The testing strategy should focus on JVM unit tests for pure logic and only use instrumented tests if a direct Android API dependency can’t be abstracted.
+Finally, update the unit tests to reflect the new model and mapper and to improve test doubles. Remove the low-value data-class test, add tests for the UI state mapper, update repository and coordinator tests to the new types, and prefer simple fakes over mocks where practical. Keep the existing sizing and drawing tests; they remain valid.
 
 ## Concrete Steps
 
 All commands are run from `/Users/sotayamashita/AndroidStudioProjects/sioribi`.
 
-1. Identify and list the files to move or split by layer. Capture a short list of current files and their future homes in the plan’s `Artifacts and Notes` section.
-2. Create the new data layer repository and update `GetYearProgressUseCase` to depend on it.
-3. Introduce the UI-layer interfaces for writing widget state and rendering, and refactor `WidgetUpdateWorker` to use a coordinator that depends on those interfaces and the use case.
-4. Update the manual dependency graph in `app/src/main/java/com/example/sioribi/di/AppGraph.kt` to wire the new components and inject them into workers via providers.
-5. Update unit tests or add new ones for repository logic, mapper logic, and worker orchestration; keep them in `app/src/test/java/` with names matching the new classes.
-6. Run formatting and unit tests:
+1. Introduce the new domain model and update the repository and use case to use it.
+2. Add a UI-layer mapper and UI state type, and update `WidgetStateWriter` and the coordinator to use UI state rather than the domain model.
+3. Move UI helper functions out of `WidgetUpdateWorker.kt` into a dedicated UI file (for example `WidgetStateMapping.kt`), and update references.
+4. Normalize logging in `YearProgressWidget.kt` and `WidgetUpdateCoordinator.kt`, ensuring debug logs are gated and update logs remain concise.
+5. Update tests and remove obsolete ones; add new tests for the mapper and updated coordinator behavior.
+6. Run formatting and tests:
 
     ./gradlew spotlessApply
     ./gradlew testDebugUnitTest
@@ -91,81 +111,128 @@ and re-run the Gradle command.
 
 Validation is complete when the following are true:
 
-- Running `./gradlew testDebugUnitTest` passes with updated tests that cover the new repository, updated use case, widget update coordinator, and existing layout/drawing logic. The tests should demonstrate that a fake time source yields the expected year progress and that widget update orchestration writes and renders state with the correct refresh reason.
-- Running the app and manually refreshing the widget triggers a log line from `buildWidgetUpdateLogMessage` showing the correct year and formatted day count. This verifies the end-to-end update pipeline.
-- The widget continues to render a grid of dots and footer values without runtime exceptions after the refactor.
+- Running `./gradlew testDebugUnitTest` passes with updated tests that cover the data layer calculations, UI state mapping, widget update coordination, and layout/drawing logic.
+- Manually refreshing the widget (tap) produces exactly one clear update log line (for example “Updated widget for 2026: 12/365 reason=Manual”) and does not spam per-render debug logs.
+- The widget renders the same grid and footer values as before, with no crashes or missing data.
 
 ## Idempotence and Recovery
 
-The steps are designed to be additive and safe. Refactors should be performed by introducing new interfaces and moving call sites, not by deleting existing code immediately. If a change causes failures, revert the specific file edit and re-run `./gradlew testDebugUnitTest` to confirm the baseline passes before reapplying the change. Keep at least one working path for widget updates until the new coordinator is fully wired and tests pass.
+The refactor is safe to apply incrementally. Introduce the new model and mapper first, then update the coordinator and writer to accept the new UI state, keeping compilation green at each step. If a change breaks tests or compilation, revert the most recent file edit and re-run `./gradlew testDebugUnitTest` to confirm baseline behavior before reapplying the change in smaller steps.
 
 ## Artifacts and Notes
 
-The following list will be populated during implementation to make the refactor reproducible by a newcomer:
+Planned new or updated files:
 
-- Planned file moves and new files:
-  - New: `app/src/main/java/com/example/sioribi/data/YearProgressRepository.kt`
-  - New: `app/src/main/java/com/example/sioribi/data/DefaultYearProgressRepository.kt`
-  - New: `app/src/main/java/com/example/sioribi/ui/WidgetStateWriter.kt`
-  - New: `app/src/main/java/com/example/sioribi/ui/WidgetRenderer.kt`
-  - New: `app/src/main/java/com/example/sioribi/ui/WidgetUpdateCoordinator.kt`
-  - Update in place: `app/src/main/java/com/example/sioribi/domain/GetYearProgressUseCase.kt`
-  - Update in place: `app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt`
-  - Update in place: `app/src/main/java/com/example/sioribi/di/AppGraph.kt`
-- Short example log lines from widget update runs (to be captured once wired).
-- Minimal diffs for interface introductions and coordinator wiring (to be captured during implementation).
+- New: `app/src/main/java/com/example/sioribi/domain/YearProgress.kt` (domain model without UI formatting).
+- Update: `app/src/main/java/com/example/sioribi/data/YearProgressRepository.kt` and `app/src/main/java/com/example/sioribi/data/DefaultYearProgressRepository.kt` to return the new domain model.
+- Update: `app/src/main/java/com/example/sioribi/domain/GetYearProgressUseCase.kt` to use `operator fun invoke()`.
+- New: `app/src/main/java/com/example/sioribi/ui/YearProgressUiState.kt` (UI state data class).
+- New: `app/src/main/java/com/example/sioribi/ui/YearProgressUiStateMapper.kt` (maps domain → UI state).
+- New or updated: `app/src/main/java/com/example/sioribi/ui/WidgetStateMapping.kt` to hold preference write and log message helpers.
+- Update: `app/src/main/java/com/example/sioribi/ui/WidgetStateWriter.kt`, `app/src/main/java/com/example/sioribi/ui/GlanceWidgetAdapters.kt`, `app/src/main/java/com/example/sioribi/ui/WidgetUpdateCoordinator.kt`, and `app/src/main/java/com/example/sioribi/ui/WidgetUpdateWorker.kt` to use the UI state.
+- Update: `app/src/main/java/com/example/sioribi/ui/YearProgressWidget.kt` to gate or remove debug logs.
+- Tests updated/added under `app/src/test/java/com/example/sioribi/...`.
 
 ## Interfaces and Dependencies
 
-The following interfaces and types must exist after the refactor, with names and packages as specified, to enforce boundaries and testability.
+The following interfaces and types must exist after the refactor, with names and packages as specified:
+
+In `app/src/main/java/com/example/sioribi/domain/YearProgress.kt`, define:
+
+    data class YearProgress(
+        val currentDay: Int,
+        val totalDays: Int,
+        val year: Int,
+    )
 
 In `app/src/main/java/com/example/sioribi/data/YearProgressRepository.kt`, define:
 
     interface YearProgressRepository {
-        fun getYearProgress(): YearProgressModel
+        fun getYearProgress(): YearProgress
     }
 
-In `app/src/main/java/com/example/sioribi/data/DefaultYearProgressRepository.kt`, define a class that depends on `TimeDataSource` and returns a `YearProgressModel` calculated from the current date. Keep the calculation in one place to ensure a single source of truth.
+In `app/src/main/java/com/example/sioribi/domain/GetYearProgressUseCase.kt`, define:
 
-In `app/src/main/java/com/example/sioribi/domain/GetYearProgressUseCase.kt`, update the constructor to accept `YearProgressRepository` and keep a single `execute()` method that returns `YearProgressModel`.
+    class GetYearProgressUseCase(
+        private val yearProgressRepository: YearProgressRepository,
+    ) {
+        operator fun invoke(): YearProgress = yearProgressRepository.getYearProgress()
+    }
 
-In `app/src/main/java/com/example/sioribi/ui/WidgetStateWriter.kt`, define:
+In `app/src/main/java/com/example/sioribi/ui/YearProgressUiState.kt`, define:
+
+    data class YearProgressUiState(
+        val currentDay: Int,
+        val totalDays: Int,
+        val year: Int,
+        val formatted: String,
+        val progressPercent: Int,
+    )
+
+In `app/src/main/java/com/example/sioribi/ui/YearProgressUiStateMapper.kt`, define:
+
+    class YearProgressUiStateMapper {
+        fun map(progress: YearProgress): YearProgressUiState { /* format + percent */ }
+    }
+
+In `app/src/main/java/com/example/sioribi/ui/WidgetStateWriter.kt`, update:
 
     interface WidgetStateWriter {
-        suspend fun write(model: YearProgressModel)
+        suspend fun write(state: YearProgressUiState)
     }
 
-In `app/src/main/java/com/example/sioribi/ui/WidgetRenderer.kt`, define:
+In `app/src/main/java/com/example/sioribi/ui/WidgetUpdateCoordinator.kt`, update:
 
-    interface WidgetRenderer {
-        suspend fun render()
+    class WidgetUpdateCoordinator(
+        private val getYearProgressUseCase: GetYearProgressUseCase,
+        private val mapper: YearProgressUiStateMapper,
+        private val stateWriter: WidgetStateWriter,
+        private val renderer: WidgetRenderer,
+        private val logger: WidgetUpdateLogger = DefaultWidgetUpdateLogger(),
+    ) {
+        suspend fun update(reason: RefreshReason)
     }
 
-In `app/src/main/java/com/example/sioribi/ui/WidgetUpdateCoordinator.kt`, define a class that accepts `GetYearProgressUseCase`, `WidgetStateWriter`, and `WidgetRenderer` and exposes:
+In `app/src/main/java/com/example/sioribi/ui/WidgetStateMapping.kt`, define helpers:
 
-    suspend fun update(reason: RefreshReason)
-
-The coordinator should call the use case, write the model, and then render.
-
-In `app/src/main/java/com/example/sioribi/di/AppGraph.kt`, wire the concrete implementations. The `WidgetUpdateWorker` should request the coordinator from the graph instead of directly using the use case and Glance APIs.
+    fun writeUiStateToPreferences(preferences: MutablePreferences, state: YearProgressUiState)
+    fun buildWidgetUpdateLogMessage(state: YearProgressUiState, reason: String): String
 
 ## Testing Strategy
 
-Testing should mirror the layered architecture and the local guidance:
+The test plan below is prescriptive and should be followed to align with the new model and UI state separation.
 
-- Data layer: add unit tests for `DefaultYearProgressRepository` with fake `TimeDataSource` implementations, covering leap and non-leap years and boundary days.
-- Domain layer: keep or adapt `GetYearProgressUseCaseTest` to verify that the use case delegates to the repository and returns the expected model.
-- UI layer (non-UI logic): add unit tests for the widget update coordinator using fake `WidgetStateWriter` and `WidgetRenderer`, verifying that updates happen in the correct order and with the expected model and reason.
-- Existing widget layout/drawing tests should remain but may move if the helper functions are relocated; update test names to match class names.
+Remove:
 
-Prefer fakes over mocks, keep tests deterministic, and avoid Android framework dependencies in JVM tests by placing Android-specific operations behind interfaces.
+- Delete `app/src/test/java/com/example/sioribi/domain/YearProgressModelTest.kt` (low-value data-class test for the old domain model).
+
+Add:
+
+- Add `app/src/test/java/com/example/sioribi/ui/YearProgressUiStateMapperTest.kt` covering:
+  - Non-leap year mapping: 2026-01-04 → formatted “4/365”, percent 1.
+  - Leap day mapping: 2024-02-29 → formatted “60/366”, percent 16.
+  - Boundary mapping: 2026-01-01 → percent 0; 2026-12-31 → percent 100.
+  - If input sanitization is introduced in the mapper, add explicit tests for it.
+
+Update:
+
+- Update `app/src/test/java/com/example/sioribi/data/DefaultYearProgressRepositoryTest.kt` to assert only `currentDay`, `totalDays`, and `year` on `YearProgress` (no formatted/percent assertions).
+- Update `app/src/test/java/com/example/sioribi/domain/GetYearProgressUseCaseTest.kt` to use `invoke()` and `YearProgress`.
+- Update `app/src/test/java/com/example/sioribi/ui/WidgetUpdateCoordinatorTest.kt` to inject a fake `YearProgressUiStateMapper` and assert ordering of write → render → log with UI state.
+- Update `app/src/test/java/com/example/sioribi/ui/WidgetUpdateWorkerTest.kt` to use `YearProgressUiState` and `writeUiStateToPreferences` helper.
+- Update `app/src/test/java/com/example/sioribi/ui/WidgetRefreshReceiverTest.kt` to use real `Intent(action)` objects instead of mocking.
+
+Keep:
+
+- All sizing/drawing tests (`WidgetGridSizingTest`, `YearProgressWidgetDotPositionsTest`, `YearProgressWidgetBitmapTest`, `YearProgressWidgetSizingTest`, `YearProgressWidgetStateTest`) unless the helpers they reference are moved.
+
+Test double preference:
+
+- Prefer simple fakes over mocks across JVM unit tests wherever feasible.
 
 ## Notes on Plan Maintenance
 
 When this plan is revised during implementation, add a note at the bottom explaining what changed and why, and update all sections to remain self-contained.
 
-Plan update note (2026-01-12): Marked milestone 1 as complete and recorded the planned file moves/new files in Artifacts and Notes to lock in the target architecture boundaries.
-Plan update note (2026-01-12): Marked milestone 2 as complete after introducing the repository boundary and updating the use case to depend on it.
-Plan update note (2026-01-12): Marked milestone 3 as complete after introducing the widget update coordinator and Glance adapters.
-Plan update note (2026-01-12): Marked milestone 4 as complete after adding coordinator unit tests and passing JVM tests.
-Plan update note (2026-01-12): Added refresh reason parsing helper and tests to avoid inline enum scans in the worker.
+Plan update note (2026-01-12): Replaced the previous ExecPlan with a new consistency-focused refactor plan after auditing current code and local architecture guidance, incorporating model/UI state separation, logging normalization, and test strategy updates.
+Plan update note (2026-01-12): Added a concrete, file-level test plan specifying which tests to add, update, and remove, including mapper coverage and fake-first guidance.
