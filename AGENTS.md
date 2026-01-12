@@ -11,7 +11,9 @@
 
 ## ExecPlans
 
-When writing complex features or significant refactors, use an ExecPlan (as described in .agent/PLANS.md) from design to implementation.
+ExecPlan is our shorthand for the execution plan described in `.agent/PLANS.md`.
+When writing complex features or significant refactors, use an ExecPlan from design to implementation.
+Store ExecPlans under `.agent/plans/`.
 
 ## Build, Test, and Development Commands
 
@@ -47,7 +49,3 @@ If Gradle fails with a `JavaVersion.parse 25.0.1` error, activate the configured
 
 - Commits follow Conventional Commits (e.g., `feat:`, `fix(widget):`, `test:`) as seen in `git log`.
 - PRs should include: a short description of behavior change, test results, and screenshots for UI/widget changes.
-
-## Agent-Specific Instructions
-
-- For complex features or significant refactors, create and maintain an ExecPlan per `.agent/PLANS.md` and store it under `.agent/plans/`.
