@@ -13,7 +13,7 @@ After this refactor, the app’s widget continues to show the year progress, but
 - [x] (2026-01-12 00:15Z) Read local architecture guidance indexes and core pages for layered architecture, UI layer, data layer, domain layer, and testing.
 - [x] (2026-01-12 00:25Z) Surveyed current app structure, widget update flow, dependency wiring, and unit tests.
 - [x] (2026-01-12 01:05Z) Defined target architecture boundaries, interfaces, and naming conventions for the refactor, and listed planned file moves.
-- [ ] Implement data layer refactor and adjust domain layer use cases.
+- [x] (2026-01-12 01:20Z) Implemented data layer refactor with repository boundary and updated the domain use case to delegate to it.
 - [ ] Refactor widget update pipeline and UI state mapping to isolate Android-specific code.
 - [ ] Update and expand unit tests and finalize validation commands.
 
@@ -163,3 +163,4 @@ Prefer fakes over mocks, keep tests deterministic, and avoid Android framework d
 When this plan is revised during implementation, add a note at the bottom explaining what changed and why, and update all sections to remain self-contained.
 
 Plan update note (2026-01-12): Marked milestone 1 as complete and recorded the planned file moves/new files in Artifacts and Notes to lock in the target architecture boundaries.
+Plan update note (2026-01-12): Marked milestone 2 as complete after introducing the repository boundary and updating the use case to depend on it.
