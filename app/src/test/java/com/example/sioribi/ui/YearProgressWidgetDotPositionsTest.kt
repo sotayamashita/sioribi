@@ -6,18 +6,40 @@ import org.junit.Test
 class YearProgressWidgetDotPositionsTest {
     @Test
     fun `computeDotPositions returns empty when inputs are invalid`() {
-        val specs = DotDrawSpecs(dotSizePx = 0f, horizontalSpacingPx = 1f, verticalSpacingPx = 1f)
+        val specs =
+            DotDrawSpecs(
+                dotSizePx = 0f,
+                drawRadiusPx = 0f,
+                horizontalSpacingPx = 1f,
+                verticalSpacingPx = 1f,
+            )
 
         assertThat(computeDotPositions(totalDays = 10, columns = 7, specs = specs)).isEmpty()
-        assertThat(computeDotPositions(totalDays = 0, columns = 7, specs = specs.copy(dotSizePx = 2f)))
-            .isEmpty()
-        assertThat(computeDotPositions(totalDays = 10, columns = 0, specs = specs.copy(dotSizePx = 2f)))
-            .isEmpty()
+        assertThat(
+            computeDotPositions(
+                totalDays = 0,
+                columns = 7,
+                specs = specs.copy(dotSizePx = 2f, drawRadiusPx = 1f),
+            ),
+        ).isEmpty()
+        assertThat(
+            computeDotPositions(
+                totalDays = 10,
+                columns = 0,
+                specs = specs.copy(dotSizePx = 2f, drawRadiusPx = 1f),
+            ),
+        ).isEmpty()
     }
 
     @Test
     fun `computeDotPositions lays out first row correctly`() {
-        val specs = DotDrawSpecs(dotSizePx = 10f, horizontalSpacingPx = 2f, verticalSpacingPx = 3f)
+        val specs =
+            DotDrawSpecs(
+                dotSizePx = 10f,
+                drawRadiusPx = 5f,
+                horizontalSpacingPx = 2f,
+                verticalSpacingPx = 3f,
+            )
 
         val positions = computeDotPositions(totalDays = 3, columns = 7, specs = specs)
 
@@ -29,7 +51,13 @@ class YearProgressWidgetDotPositionsTest {
 
     @Test
     fun `computeDotPositions wraps to next row`() {
-        val specs = DotDrawSpecs(dotSizePx = 10f, horizontalSpacingPx = 2f, verticalSpacingPx = 3f)
+        val specs =
+            DotDrawSpecs(
+                dotSizePx = 10f,
+                drawRadiusPx = 5f,
+                horizontalSpacingPx = 2f,
+                verticalSpacingPx = 3f,
+            )
 
         val positions = computeDotPositions(totalDays = 3, columns = 2, specs = specs)
 
@@ -41,7 +69,13 @@ class YearProgressWidgetDotPositionsTest {
 
     @Test
     fun `computeDotDrawCommands returns empty when inputs are invalid`() {
-        val specs = DotDrawSpecs(dotSizePx = 0f, horizontalSpacingPx = 1f, verticalSpacingPx = 1f)
+        val specs =
+            DotDrawSpecs(
+                dotSizePx = 0f,
+                drawRadiusPx = 0f,
+                horizontalSpacingPx = 1f,
+                verticalSpacingPx = 1f,
+            )
 
         assertThat(
             computeDotDrawCommands(
@@ -56,7 +90,7 @@ class YearProgressWidgetDotPositionsTest {
                 totalDays = 0,
                 currentDay = 1,
                 columns = 7,
-                specs = specs.copy(dotSizePx = 2f),
+                specs = specs.copy(dotSizePx = 2f, drawRadiusPx = 1f),
             ),
         ).isEmpty()
         assertThat(
@@ -64,14 +98,20 @@ class YearProgressWidgetDotPositionsTest {
                 totalDays = 10,
                 currentDay = 1,
                 columns = 0,
-                specs = specs.copy(dotSizePx = 2f),
+                specs = specs.copy(dotSizePx = 2f, drawRadiusPx = 1f),
             ),
         ).isEmpty()
     }
 
     @Test
     fun `computeDotDrawCommands clamps current day and maps active state`() {
-        val specs = DotDrawSpecs(dotSizePx = 10f, horizontalSpacingPx = 2f, verticalSpacingPx = 3f)
+        val specs =
+            DotDrawSpecs(
+                dotSizePx = 10f,
+                drawRadiusPx = 5f,
+                horizontalSpacingPx = 2f,
+                verticalSpacingPx = 3f,
+            )
 
         val clampedHigh =
             computeDotDrawCommands(totalDays = 3, currentDay = 10, columns = 7, specs = specs)

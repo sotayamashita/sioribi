@@ -3,6 +3,9 @@ package com.example.sioribi.ui
 import androidx.compose.ui.unit.DpSize
 import kotlin.math.roundToInt
 
+// Scales the dot radius independently of layout spacing to tune visual density.
+private const val DOT_DRAW_SCALE = 0.45f
+
 internal data class BitmapSize(
     val width: Int,
     val height: Int,
@@ -10,6 +13,7 @@ internal data class BitmapSize(
 
 internal data class DotDrawSpecs(
     val dotSizePx: Float,
+    val drawRadiusPx: Float,
     val horizontalSpacingPx: Float,
     val verticalSpacingPx: Float,
 )
@@ -41,6 +45,7 @@ internal fun computeDotDrawSpecs(
 ): DotDrawSpecs =
     DotDrawSpecs(
         dotSizePx = layout.dotSize.value * density,
+        drawRadiusPx = (layout.dotSize.value * density * DOT_DRAW_SCALE) / 2f,
         horizontalSpacingPx = layout.horizontalSpacing.value * density,
         verticalSpacingPx = layout.verticalSpacing.value * density,
     )
@@ -77,7 +82,7 @@ internal fun computeDotDrawCommands(
         return emptyList()
     }
     val safeCurrentDay = currentDay.coerceIn(0, totalDays)
-    val radius = specs.dotSizePx / 2f
+    val radius = specs.drawRadiusPx
     val positions = computeDotPositions(totalDays = totalDays, columns = columns, specs = specs)
     val commands = ArrayList<DotDrawCommand>(positions.size)
     for ((index, position) in positions.withIndex()) {
