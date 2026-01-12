@@ -41,6 +41,7 @@ class YearProgressWidgetBitmapTest {
         val specs = computeDotDrawSpecs(layout, density = 2.0f)
 
         assertThat(specs.dotSizePx).isEqualTo(4.0f)
+        assertThat(specs.drawRadiusPx).isEqualTo(0.9f)
         assertThat(specs.horizontalSpacingPx).isEqualTo(3.0f)
         assertThat(specs.verticalSpacingPx).isEqualTo(2.0f)
     }
